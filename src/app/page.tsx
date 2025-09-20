@@ -1,103 +1,410 @@
-import Image from "next/image";
+"use client"
 
-export default function Home() {
+import { useState, useRef, useEffect } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Phone, Users, Settings, AlertCircle, CheckCircle } from "lucide-react"
+import { useWebRTC } from "@/hooks/use-webrtc"
+import { VideoGrid } from "@/components/video-grid"
+import { ParticipantPanel } from "@/components/participant-panel"
+import CallControls from "@/components/controls"
+
+export default function VideoCallPage() {
+  const [isCallActive, setIsCallActive] = useState(false)
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true)
+  const [isAudioEnabled, setIsAudioEnabled] = useState(true)
+  const [roomId, setRoomId] = useState("")
+  const [signalingServerUrl, setSignalingServerUrl] = useState("ws://localhost:3001")
+  const [connectionError, setConnectionError] = useState<string | null>(null)
+  const [isConnecting, setIsConnecting] = useState(false)
+  const [serverStatus, setServerStatus] = useState<"unknown" | "checking" | "online" | "offline">("unknown")
+  const [useLocalMode, setUseLocalMode] = useState(false)
+
+  const localStreamRef = useRef<MediaStream | null>(null)
+
+  const {
+    isConnected,
+    participants,
+    roomId: currentRoomId,
+    connectToSignalingServer,
+    joinRoom,
+    addLocalStream,
+    disconnect,
+    clientId,
+    checkSignalingServer,
+  } = useWebRTC({
+    onParticipantJoined: (participant) => {
+      console.log("Participant joined:", participant.id)
+    },
+    onParticipantLeft: (participantId) => {
+      console.log("Participant left:", participantId)
+    },
+    onParticipantStreamUpdate: (participantId, stream) => {
+      console.log("Participant stream updated:", participantId)
+    },
+    onConnectionStateChange: (participantId, state) => {
+      console.log(`Connection state changed for ${participantId}:`, state)
+    },
+    onError: (error) => {
+      console.error("WebRTC error:", error)
+      setConnectionError(error.message)
+      setIsConnecting(false)
+    },
+  })
+
+  const checkServerStatus = async () => {
+    if (!signalingServerUrl) return
+
+    setServerStatus("checking")
+    try {
+      const isOnline = await checkSignalingServer(signalingServerUrl)
+      setServerStatus(isOnline ? "online" : "offline")
+    } catch {
+      setServerStatus("offline")
+    }
+  }
+
+  useEffect(() => {
+    if (signalingServerUrl) {
+      const timeoutId = setTimeout(checkServerStatus, 500)
+      return () => clearTimeout(timeoutId)
+    }
+  }, [signalingServerUrl])
+
+  const getUserMedia = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: isVideoEnabled ? { width: 1280, height: 720, frameRate: 30 } : false,
+        audio: isAudioEnabled ? { echoCancellation: true, noiseSuppression: true } : false,
+      })
+
+      localStreamRef.current = stream
+      return stream
+    } catch (error) {
+      console.error("Error accessing media devices:", error)
+      throw error
+    }
+  }
+
+  const startCall = async () => {
+    setConnectionError(null)
+    setIsConnecting(true)
+
+    try {
+      const stream = await getUserMedia()
+      setIsCallActive(true)
+
+      if (!useLocalMode) {
+        await connectToSignalingServer(`${signalingServerUrl}?clientId=${"idFromSupabaseSession"}`)
+      }
+
+      addLocalStream(stream)
+      const room = roomId || "default-room"
+
+      if (!useLocalMode) {
+        joinRoom(room)
+      }
+
+      setIsConnecting(false)
+    } catch (error) {
+      console.error("Failed to start call:", error)
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
+      setConnectionError(errorMessage)
+      setIsCallActive(false)
+      setIsConnecting(false)
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop())
+        localStreamRef.current = null
+      }
+    }
+  }
+
+  const endCall = () => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop())
+    }
+
+    disconnect()
+    setIsCallActive(false)
+    localStreamRef.current = null
+    setConnectionError(null)
+    setIsConnecting(false)
+  }
+
+  const toggleVideo = () => {
+    if (localStreamRef.current) {
+      const videoTrack = localStreamRef.current.getVideoTracks()[0]
+      if (videoTrack) {
+        videoTrack.enabled = !videoTrack.enabled
+        setIsVideoEnabled(videoTrack.enabled)
+      }
+    }
+  }
+
+  const toggleAudio = () => {
+    if (localStreamRef.current) {
+      const audioTrack = localStreamRef.current.getAudioTracks()[0]
+      if (audioTrack) {
+        audioTrack.enabled = !audioTrack.enabled
+        setIsAudioEnabled(audioTrack.enabled)
+      }
+    }
+  }
+
+  const getConnectionStatus = () => {
+    if (!isCallActive) return "disconnected"
+    if (isConnecting) return "connecting"
+    if (isConnected) return "connected"
+    return "waiting"
+  }
+
+  const getConnectionBadgeVariant = () => {
+    const status = getConnectionStatus()
+    switch (status) {
+      case "connected":
+        return "default"
+      case "connecting":
+        return "secondary"
+      default:
+        return "outline"
+    }
+  }
+
+  const getConnectionText = () => {
+    const status = getConnectionStatus()
+    const participantCount = participants.size
+    switch (status) {
+      case "connected":
+        return participantCount > 0 ? `Connected (${participantCount + 1} total)` : "Connected"
+      case "connecting":
+        return "Connecting..."
+      case "waiting":
+        return "Waiting for participants..."
+      default:
+        return "Disconnected"
+    }
+  }
+
+  const getServerStatusDisplay = () => {
+    switch (serverStatus) {
+      case "online":
+        return { icon: CheckCircle, text: "Server Online", variant: "default" as const }
+      case "offline":
+        return { icon: AlertCircle, text: "Server Offline", variant: "destructive" as const }
+      case "checking":
+        return { icon: AlertCircle, text: "Checking...", variant: "secondary" as const }
+      default:
+        return { icon: AlertCircle, text: "Unknown", variant: "outline" as const }
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop())
+      }
+      disconnect()
+    }
+  }, [disconnect])
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-background p-4">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-4xl font-bold text-foreground mb-2 text-balance">Multi-Peer Video Call</h1>
+          <p className="text-muted-foreground text-pretty">
+            Group video calling with WebRTC - supports 2 or more participants
+          </p>
+          <div className="mt-4 flex items-center justify-center gap-4 flex-wrap">
+            <Badge variant={getConnectionBadgeVariant()}>{getConnectionText()}</Badge>
+            {clientId && (
+              <Badge variant="outline">
+                <Users className="w-3 h-3 mr-1" />
+                ID: {clientId.substring(0, 6)}
+              </Badge>
+            )}
+            {currentRoomId && <Badge variant="outline">Room: {currentRoomId}</Badge>}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {connectionError && (
+          <Card className="mb-6 max-w-2xl mx-auto border-destructive">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
+                <div>
+                  <h4 className="font-semibold text-destructive mb-1">Connection Failed</h4>
+                  <p className="text-sm text-muted-foreground mb-3">{connectionError}</p>
+                  <div className="text-xs text-muted-foreground">
+                    <p>• Make sure the signaling server is running on {signalingServerUrl}</p>
+                    <p>
+                      • Run: <code className="bg-muted px-1 rounded">cd server && npm install && npm start</code>
+                    </p>
+                    <p>• Check that the WebSocket URL is correct</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {!isCallActive && (
+          <Card className="mb-8 max-w-md mx-auto">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Call Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="local-mode"
+                  checked={useLocalMode}
+                  onChange={(e) => setUseLocalMode(e.target.checked)}
+                  className="rounded"
+                />
+                <Label htmlFor="local-mode" className="text-sm">
+                  Local Mode (Browser-only testing)
+                </Label>
+              </div>
+
+              {!useLocalMode && (
+                <>
+                  <div>
+                    <Label htmlFor="room-id">Room ID (optional)</Label>
+                    <Input
+                      id="room-id"
+                      placeholder="Enter room ID or leave empty for default"
+                      value={roomId}
+                      onChange={(e) => setRoomId(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="server-url">Signaling Server</Label>
+                    <Input
+                      id="server-url"
+                      placeholder="ws://localhost:3001"
+                      value={signalingServerUrl}
+                      onChange={(e) => setSignalingServerUrl(e.target.value)}
+                    />
+                    {serverStatus !== "unknown" && (
+                      <div className="mt-2">
+                        {(() => {
+                          const status = getServerStatusDisplay()
+                          return (
+                            <Badge variant={status.variant} className="text-xs">
+                              <status.icon className="w-3 h-3 mr-1" />
+                              {status.text}
+                            </Badge>
+                          )
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {useLocalMode && (
+                <div className="p-3 bg-muted rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    Local mode allows you to test camera/microphone access without a signaling server. Perfect for
+                    development and testing the UI components.
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {isCallActive && (
+          <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
+            <div className="xl:col-span-3">
+              <VideoGrid
+                localStream={localStreamRef.current || undefined}
+                participants={participants}
+                isVideoEnabled={isVideoEnabled}
+                isAudioEnabled={isAudioEnabled}
+                className="min-h-[400px] max-h-[80vh]"
+              />
+            </div>
+
+            <div className="xl:col-span-1">
+              <ParticipantPanel
+                participants={participants}
+                clientId={clientId}
+                roomId={currentRoomId}
+                className="sticky top-4"
+              />
+            </div>
+          </div>
+        )}
+
+        <div className="flex justify-center gap-4 mb-8">
+          {!isCallActive ? (
+            <Button
+              onClick={startCall}
+              size="lg"
+              className="px-8"
+              disabled={isConnecting || (!useLocalMode && serverStatus === "offline")}
+            >
+              <Phone className="w-5 h-5 mr-2" />
+              {isConnecting ? "Connecting..." : useLocalMode ? "Start Local Test" : "Join Call"}
+            </Button>
+          ) : <CallControls
+            isVideoEnabled={isVideoEnabled}
+            isAudioEnabled={isAudioEnabled}
+            toggleAudio={toggleAudio}
+            toggleVideo={toggleVideo}
+            endCall={endCall}
+          />}
+        </div>
+
+        {!isCallActive && (
+          <Card className="max-w-3xl mx-auto">
+            <CardHeader>
+              <CardTitle>How to Use Multi-Peer Video Calling</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Setup Steps:</h4>
+                  <ol className="space-y-1 text-sm">
+                    <li>1. Start the signaling server</li>
+                    <li>2. Enter a room ID (optional)</li>
+                    <li>3. Click "Join Call"</li>
+                    <li>4. Share room ID with multiple participants</li>
+                    <li>5. Each participant joins the same room</li>
+                  </ol>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Features:</h4>
+                  <ul className="space-y-1 text-sm">
+                    <li>• Support for 2+ participants</li>
+                    <li>• Automatic video grid layout</li>
+                    <li>• Participant management panel</li>
+                    <li>• Real-time connection status</li>
+                    <li>• HD video quality (720p)</li>
+                    <li>• Echo cancellation</li>
+                    <li>• Room ID sharing</li>
+                  </ul>
+                </div>
+              </div>
+              <div className="pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Server Setup:</strong> Run{" "}
+                  <code className="bg-muted px-1 rounded">cd server && npm install && npm start</code> to start the
+                  signaling server on port 3001. Multiple participants can join the same room for group video calls.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
-  );
+  )
 }
