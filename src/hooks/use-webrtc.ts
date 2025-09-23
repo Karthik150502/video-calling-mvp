@@ -171,10 +171,7 @@ export function useWebRTC({
     }, 2000) // Reduced timeout for faster recovery
   }, [])
 
-  const addLocalStream = useCallback((stream: MediaStream) => {
-    console.log("Adding local stream with tracks:", stream.getTracks().length)
-    localStreamRef.current = stream
-
+  const updatePeerConnections = useCallback((stream: MediaStream) => {
     peerConnectionsRef.current.forEach((pc, participantId) => {
       console.log("Adding tracks to peer connection for:", participantId)
 
@@ -193,6 +190,59 @@ export function useWebRTC({
       })
     })
   }, [])
+
+  const replaceAudioTrackInPeerConnections = useCallback(async (newTrack: MediaStreamTrack) => {
+    if (!peerConnectionsRef.current) {
+      console.log('No peer connections available, falling back to updatePeerConnections');
+      if (localStreamRef.current) {
+        updatePeerConnections(localStreamRef.current);
+      }
+      return;
+    }
+
+    console.log('Replacing audio track in', peerConnectionsRef.current.size, 'peer connections');
+
+    const replacePromises = Array.from(peerConnectionsRef.current.entries()).map(async ([participantId, pc]) => {
+      try {
+        // Find the audio sender
+        const audioSender = pc.getSenders().find(sender =>
+          sender.track && sender.track.kind === 'audio'
+        );
+
+        if (audioSender) {
+          console.log(`Replacing audio track for participant ${participantId}`);
+          await audioSender.replaceTrack(newTrack);
+          console.log(`Successfully replaced audio track for participant ${participantId}`);
+        } else {
+          console.log(`No audio sender found for participant ${participantId}, adding track`);
+          pc.addTrack(newTrack, localStreamRef.current!);
+        }
+      } catch (error) {
+        console.error(`Error replacing track for participant ${participantId}:`, error);
+        // Fallback: try removing and adding the track
+        try {
+          const audioSender = pc.getSenders().find(sender =>
+            sender.track && sender.track.kind === 'audio'
+          );
+          if (audioSender) {
+            pc.removeTrack(audioSender);
+          }
+          pc.addTrack(newTrack, localStreamRef.current!);
+          console.log(`Fallback successful for participant ${participantId}`);
+        } catch (fallbackError) {
+          console.error(`Fallback also failed for participant ${participantId}:`, fallbackError);
+        }
+      }
+    });
+
+    await Promise.allSettled(replacePromises);
+  }, [updatePeerConnections]);
+
+  const addLocalStream = useCallback((stream: MediaStream) => {
+    console.log("Adding local stream with tracks:", stream.getTracks().length)
+    localStreamRef.current = stream
+    updatePeerConnections(stream)
+  }, [updatePeerConnections])
 
   const createOffer = useCallback(
     async (participantId: string) => {
@@ -541,5 +591,6 @@ export function useWebRTC({
     disconnect,
     clientId: clientIdRef.current,
     checkSignalingServer, // Exposed helper function
+    replaceAudioTrackInPeerConnections
   }
 }
