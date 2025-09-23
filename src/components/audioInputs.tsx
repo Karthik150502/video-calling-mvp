@@ -27,10 +27,9 @@ export function AudioInputs({
 }: {
     activeAudioInputId: string | undefined
     audioInputs: { value: string, label: string }[],
-    onSelect: (deviceId: string) => void
+    onSelect: (deviceId: string) => void,
 }) {
     const [open, setOpen] = React.useState(false)
-    const [value, setValue] = React.useState(activeAudioInputId)
 
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -39,15 +38,15 @@ export function AudioInputs({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-[200px] justify-between"
+                    className="w-fit justify-between"
                 >
-                    {value
-                        ? audioInputs.find((audioInput) => audioInput.value === value)?.label
-                        : "Select framework..."}
+                    {activeAudioInputId
+                        ? audioInputs.find((audioInput) => audioInput.value === activeAudioInputId)?.label
+                        : "Select Audio Input..."}
                     <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-0">
+            <PopoverContent className="w-fit p-0">
                 <Command>
                     <CommandInput placeholder="Search framework..." />
                     <CommandList>
@@ -58,7 +57,6 @@ export function AudioInputs({
                                     key={audioInput.value}
                                     value={audioInput.value}
                                     onSelect={(currentValue) => {
-                                        setValue(currentValue)
                                         setOpen(false)
                                         onSelect(currentValue)
                                     }}
@@ -66,7 +64,7 @@ export function AudioInputs({
                                     <CheckIcon
                                         className={cn(
                                             "mr-2 h-4 w-4",
-                                            value === audioInput.value ? "opacity-100" : "opacity-0"
+                                            activeAudioInputId === audioInput.value ? "opacity-100" : "opacity-0"
                                         )}
                                     />
                                     {audioInput.label}

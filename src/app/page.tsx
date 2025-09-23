@@ -35,6 +35,7 @@ export default function VideoCallPage() {
     disconnect,
     clientId,
     checkSignalingServer,
+    replaceAudioTrackInPeerConnections
   } = useWebRTC({
     onParticipantJoined: (participant) => {
       console.log("Participant joined:", participant.id)
@@ -90,8 +91,9 @@ export default function VideoCallPage() {
   }
 
   const startCall = async () => {
-    setConnectionError(null)
-    setIsConnecting(true)
+    setConnectionError(null);
+    setIsConnecting(true);
+    setIsAudioEnabled(true); // Enabling the Audio when call is started 
 
     try {
       const stream = await getUserMedia()
@@ -132,26 +134,6 @@ export default function VideoCallPage() {
     localStreamRef.current = null
     setConnectionError(null)
     setIsConnecting(false)
-  }
-
-  const toggleVideo = () => {
-    if (localStreamRef.current) {
-      const videoTrack = localStreamRef.current.getVideoTracks()[0]
-      if (videoTrack) {
-        videoTrack.enabled = !videoTrack.enabled
-        setIsVideoEnabled(videoTrack.enabled)
-      }
-    }
-  }
-
-  const toggleAudio = () => {
-    if (localStreamRef.current) {
-      const audioTrack = localStreamRef.current.getAudioTracks()[0]
-      if (audioTrack) {
-        audioTrack.enabled = !audioTrack.enabled
-        setIsAudioEnabled(audioTrack.enabled)
-      }
-    }
   }
 
   const getConnectionStatus = () => {
@@ -358,9 +340,11 @@ export default function VideoCallPage() {
           ) : <CallControls
             isVideoEnabled={isVideoEnabled}
             isAudioEnabled={isAudioEnabled}
-            toggleAudio={toggleAudio}
-            toggleVideo={toggleVideo}
+            setIsAudioEnabled={setIsAudioEnabled}
+            setIsVideoEnabled={setIsVideoEnabled}
             endCall={endCall}
+            localStreamRef={localStreamRef}
+            replaceAudioTrackInPeerConnections={replaceAudioTrackInPeerConnections}
           />}
         </div>
 
