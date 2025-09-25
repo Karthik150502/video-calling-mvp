@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useEffect } from "react"
+import { useRef, useEffect, RefObject } from "react"
 import { VideoDisplay } from "./video-display"
 import { cn } from "@/lib/utils"
 
@@ -15,12 +15,12 @@ interface VideoGridProps {
   participants: Map<string, Participant>
   isVideoEnabled: boolean
   isAudioEnabled: boolean
-  className?: string
+  className?: string,
+  localVideoRef: RefObject<HTMLVideoElement | null>,
+  remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>,
 }
 
-export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEnabled, className }: VideoGridProps) {
-  const localVideoRef = useRef<HTMLVideoElement>(null)
-  const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map())
+export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEnabled, className, localVideoRef, remoteVideoRefs }: VideoGridProps) {
 
   // Set up local video stream
   useEffect(() => {

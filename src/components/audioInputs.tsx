@@ -20,13 +20,13 @@ import {
 } from "@/components/ui/popover"
 
 
-export function AudioInputs({
-    audioInputs,
-    activeAudioInputId,
+export function SettingsCombobox({
+    items,
+    activeItem,
     onSelect
 }: {
-    activeAudioInputId: string | undefined
-    audioInputs: { value: string, label: string }[],
+    activeItem: string | undefined
+    items: { value: string, label: string }[],
     onSelect: (deviceId: string) => void,
 }) {
     const [open, setOpen] = React.useState(false)
@@ -38,10 +38,10 @@ export function AudioInputs({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-fit justify-between"
+                    className="w-fit h-fit rounded-2xl text-xs md:text-sm justify-between text-wrap whitespace-normal"
                 >
-                    {activeAudioInputId
-                        ? audioInputs.find((audioInput) => audioInput.value === activeAudioInputId)?.label
+                    {activeItem
+                        ? items.find((item) => item.value === activeItem)?.label
                         : "Select Audio Input..."}
                     <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -52,10 +52,10 @@ export function AudioInputs({
                     <CommandList>
                         <CommandEmpty>No Audio Device found.</CommandEmpty>
                         <CommandGroup>
-                            {audioInputs.map((audioInput) => (
+                            {items.map((item) => (
                                 <CommandItem
-                                    key={audioInput.value}
-                                    value={audioInput.value}
+                                    key={item.value}
+                                    value={item.value}
                                     onSelect={(currentValue) => {
                                         setOpen(false)
                                         onSelect(currentValue)
@@ -64,10 +64,10 @@ export function AudioInputs({
                                     <CheckIcon
                                         className={cn(
                                             "mr-2 h-4 w-4",
-                                            activeAudioInputId === audioInput.value ? "opacity-100" : "opacity-0"
+                                            activeItem === item.value ? "opacity-100" : "opacity-0"
                                         )}
                                     />
-                                    {audioInput.label}
+                                    {item.label}
                                 </CommandItem>
                             ))}
                         </CommandGroup>
