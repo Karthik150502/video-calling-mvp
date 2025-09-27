@@ -11,6 +11,7 @@ import { useWebRTC } from "@/hooks/use-webrtc"
 import { VideoGrid } from "@/components/video-grid"
 import { ParticipantPanel } from "@/components/participant-panel"
 import CallControls from "@/components/controls"
+import { useHTMLVideoRefs } from "@/hooks/use-VideoRefs"
 
 export default function VideoCallPage() {
   const [isCallActive, setIsCallActive] = useState(false)
@@ -23,7 +24,9 @@ export default function VideoCallPage() {
   const [serverStatus, setServerStatus] = useState<"unknown" | "checking" | "online" | "offline">("unknown")
   const [useLocalMode, setUseLocalMode] = useState(false)
 
-  const localStreamRef = useRef<MediaStream | null>(null)
+  const localStreamRef = useRef<MediaStream | null>(null);
+
+  const { localVideoRef, remoteVideoRefs } = useHTMLVideoRefs()
 
   const {
     isConnected,
@@ -94,6 +97,8 @@ export default function VideoCallPage() {
     setConnectionError(null);
     setIsConnecting(true);
     setIsAudioEnabled(true); // Enabling the Audio when call is started 
+    setIsAudioEnabled(true);
+    setIsVideoEnabled(true);
 
     try {
       const stream = await getUserMedia()
@@ -311,6 +316,8 @@ export default function VideoCallPage() {
                 participants={participants}
                 isVideoEnabled={isVideoEnabled}
                 isAudioEnabled={isAudioEnabled}
+                localVideoRef={localVideoRef}
+                remoteVideoRefs={remoteVideoRefs}
                 className="min-h-[400px] max-h-[80vh]"
               />
             </div>
@@ -345,6 +352,8 @@ export default function VideoCallPage() {
             endCall={endCall}
             localStreamRef={localStreamRef}
             replaceAudioTrackInPeerConnections={replaceAudioTrackInPeerConnections}
+            localVideoRef={localVideoRef}
+            remoteVideoRefs={remoteVideoRefs}
           />}
         </div>
 
