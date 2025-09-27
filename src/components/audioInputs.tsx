@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react"
+import { CheckIcon, ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -38,22 +38,25 @@ export function SettingsCombobox({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-fit h-fit rounded-2xl text-xs md:text-sm justify-between text-wrap whitespace-normal"
+                    className="w-fit h-fit shadow-none text-xs md:text-sm justify-between text-wrap whitespace-normal"
                 >
                     {activeItem
                         ? items.find((item) => item.value === activeItem)?.label
                         : "Select Audio Input..."}
-                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-fit p-0">
+            <PopoverContent className="md:w-fit w-[90dvw] p-0">
                 <Command>
-                    <CommandInput placeholder="Search framework..." />
+                    {
+                        items.length > 10 && <CommandInput placeholder="Search framework..." />
+                    }
                     <CommandList>
                         <CommandEmpty>No Audio Device found.</CommandEmpty>
                         <CommandGroup>
                             {items.map((item) => (
                                 <CommandItem
+                                    className="text-xs md:text-sm"
                                     key={item.value}
                                     value={item.value}
                                     onSelect={(currentValue) => {
@@ -63,7 +66,7 @@ export function SettingsCombobox({
                                 >
                                     <CheckIcon
                                         className={cn(
-                                            "mr-2 h-4 w-4",
+                                            "mr-2 h-4 w-4 text-xs md:text-sm",
                                             activeItem === item.value ? "opacity-100" : "opacity-0"
                                         )}
                                     />

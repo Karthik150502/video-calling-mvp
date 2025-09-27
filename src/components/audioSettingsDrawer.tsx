@@ -46,7 +46,7 @@ export default function AudioSettingsDrawer({
             localVideoRef.current.setSinkId(finalDeviceId)
             setActiveAudioOutput(finalDeviceId)
         }
-        remoteVideoRefs.current.entries().forEach(([id, videoRef]) => {
+        remoteVideoRefs.current.entries().forEach(([_, videoRef]) => {
             if (videoRef) {
                 videoRef.setSinkId(finalDeviceId)
             }
@@ -130,43 +130,57 @@ export default function AudioSettingsDrawer({
     }, [isAudioEnabled, localStreamRef, replaceAudioTrackInPeerConnections])
 
     const enumerateDevices = useCallback(async () => {
-        navigator.mediaDevices.enumerateDevices()
-            .then(async (devices) => {
-                const inputs: DeviceType[] = [];
-                const outputs: DeviceType[] = [];
-                for (let i = 0; i < devices.length; i++) {
-                    const device = devices[i];
-                    if (device.kind === "audioinput") {
-                        inputs.push({
-                            label: device.label,
-                            value: device.deviceId
-                        })
-                    }
-                    if (device.kind === "audiooutput") {
-                        outputs.push({
-                            label: device.label,
-                            value: device.deviceId
-                        })
-                    }
-                }
-                setAvailableAudioInputs(inputs);
-                setAvailableAudioOutputs(outputs);
-            });
-
+        const enumeratedDevices = await navigator.mediaDevices.enumerateDevices()
+        const inputs: DeviceType[] = [];
+        const outputs: DeviceType[] = [];
+        for (let i = 0; i < enumeratedDevices.length; i++) {
+            const device = enumeratedDevices[i];
+            if (device.kind === "audioinput") {
+                inputs.push({
+                    label: device.label,
+                    value: device.deviceId
+                })
+            }
+            if (device.kind === "audiooutput") {
+                outputs.push({
+                    label: device.label,
+                    value: device.deviceId
+                })
+            }
+        }
+        setAvailableAudioInputs(inputs);
+        setAvailableAudioOutputs(outputs);
 
         // Activate the "communications" devices
-        await switchAudioInput();
         await switchAudioOutput();
-    }, [switchAudioInput, switchAudioOutput])
+
+    }, [switchAudioOutput])
+
+
+    const handleAudioInput = useCallback(async () => {
+        await enumerateDevices()
+        const device = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 48000
+            },
+            video: false
+        })
+        const audioTrack = device.getAudioTracks()[0]
+        await switchAudioInput(audioTrack.getSettings().deviceId);
+    }, [switchAudioInput, enumerateDevices])
+
 
     useEffect(() => {
-        enumerateDevices()
+        handleAudioInput()
 
         navigator.mediaDevices.addEventListener("devicechange", enumerateDevices);
         return () => {
             navigator.mediaDevices.removeEventListener("devicechange", enumerateDevices);
         }
-    }, [enumerateDevices])
+    }, [handleAudioInput, enumerateDevices])
 
 
     return (
@@ -175,21 +189,21 @@ export default function AudioSettingsDrawer({
                 {drawerTrigger}
             </DrawerTrigger>
             <DrawerContent className='w-full'>
-                <div className="mx-auto w-full flex flex-col gap-4 items-center justify-center">
+                <div className="mx-auto w-full md:w-5xl flex flex-col gap-4 items-center justify-center px-4">
                     <DrawerHeader className='w-full'>
                         <DrawerTitle>Audio Settings</DrawerTitle>
                     </DrawerHeader>
-                    <div className='w-full flex flex-col items-center justify-center gap-2 px-4'>
-                        <div className='w-[90%] flex flex-col md:flex-row items-start md:items-center justify-center md:justify-start md:gap-6 gap-2'>
-                            <p className='text-xs md:text-sm whitespace-nowrap'>Select Audio Input</p>
+                    <div className='w-full flex flex-col items-center justify-center gap-2'>
+                        <div className='w-full flex flex-col md:flex-row items-start md:items-center justify-center md:justify-between md:gap-6 gap-2'>
+                            <p className='text-xs md:text-sm whitespace-nowrap'>Audio Input</p>
                             <SettingsCombobox
                                 items={availableAudioInputs}
                                 activeItem={activeAudioInput}
                                 onSelect={switchAudioInput}
                             />
                         </div>
-                        <div className='w-[90%] flex flex-col md:flex-row items-start md:items-center justify-center md:justify-start md:gap-6 gap-2'>
-                            <p className='text-xs md:text-sm whitespace-nowrap'>Select Audio Output</p>
+                        <div className='w-full flex flex-col md:flex-row items-start md:items-center justify-center md:justify-between md:gap-6 gap-2'>
+                            <p className='text-xs md:text-sm whitespace-nowrap'>Audio Output</p>
                             <SettingsCombobox
                                 items={availableAudioOutputs}
                                 activeItem={activeAudioOutput}
