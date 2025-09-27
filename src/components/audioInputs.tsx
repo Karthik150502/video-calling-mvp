@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react"
+import { CheckIcon, ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -20,13 +20,13 @@ import {
 } from "@/components/ui/popover"
 
 
-export function AudioInputs({
-    audioInputs,
-    activeAudioInputId,
+export function SettingsCombobox({
+    items,
+    activeItem,
     onSelect
 }: {
-    activeAudioInputId: string | undefined
-    audioInputs: { value: string, label: string }[],
+    activeItem: string | undefined
+    items: { value: string, label: string }[],
     onSelect: (deviceId: string) => void,
 }) {
     const [open, setOpen] = React.useState(false)
@@ -38,24 +38,27 @@ export function AudioInputs({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-fit justify-between"
+                    className="w-fit h-fit shadow-none text-xs md:text-sm justify-between text-wrap whitespace-normal"
                 >
-                    {activeAudioInputId
-                        ? audioInputs.find((audioInput) => audioInput.value === activeAudioInputId)?.label
+                    {activeItem
+                        ? items.find((item) => item.value === activeItem)?.label
                         : "Select Audio Input..."}
-                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-fit p-0">
+            <PopoverContent className="md:w-fit w-[90dvw] p-0">
                 <Command>
-                    <CommandInput placeholder="Search framework..." />
+                    {
+                        items.length > 10 && <CommandInput placeholder="Search framework..." />
+                    }
                     <CommandList>
                         <CommandEmpty>No Audio Device found.</CommandEmpty>
                         <CommandGroup>
-                            {audioInputs.map((audioInput) => (
+                            {items.map((item) => (
                                 <CommandItem
-                                    key={audioInput.value}
-                                    value={audioInput.value}
+                                    className="text-xs md:text-sm"
+                                    key={item.value}
+                                    value={item.value}
                                     onSelect={(currentValue) => {
                                         setOpen(false)
                                         onSelect(currentValue)
@@ -63,11 +66,11 @@ export function AudioInputs({
                                 >
                                     <CheckIcon
                                         className={cn(
-                                            "mr-2 h-4 w-4",
-                                            activeAudioInputId === audioInput.value ? "opacity-100" : "opacity-0"
+                                            "mr-2 h-4 w-4 text-xs md:text-sm",
+                                            activeItem === item.value ? "opacity-100" : "opacity-0"
                                         )}
                                     />
-                                    {audioInput.label}
+                                    {item.label}
                                 </CommandItem>
                             ))}
                         </CommandGroup>
