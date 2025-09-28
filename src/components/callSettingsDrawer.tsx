@@ -10,10 +10,12 @@ import {
     DrawerTitle,
     DrawerTrigger,
 } from "@/components/ui/drawer"
-import { SettingsCombobox } from './audioInputs';
+import CallSettingsItem from './callSettingsItem';
+import TooltipWrapper from './tooltipWrapper';
+import { Separator } from '@radix-ui/react-separator';
 
 
-type AudioSettingsProps = {
+type CallSettingsProps = {
     isVideoEnabled: boolean,
     isAudioEnabled: boolean,
     localStreamRef: RefObject<MediaStream | null>,
@@ -25,7 +27,7 @@ type AudioSettingsProps = {
 
 type DeviceType = { value: string, label: string }
 
-export default function AudioSettingsDrawer({
+export default function CallSettingsDrawer({
     isVideoEnabled,
     isAudioEnabled,
     localStreamRef,
@@ -33,7 +35,7 @@ export default function AudioSettingsDrawer({
     localVideoRef,
     remoteVideoRefs,
     drawerTrigger
-}: AudioSettingsProps) {
+}: CallSettingsProps) {
 
     const [activeAudioInput, setActiveAudioInput] = useState<string | undefined>(undefined);
     const [activeAudioOutput, setActiveAudioOutput] = useState<string | undefined>(undefined);
@@ -185,31 +187,30 @@ export default function AudioSettingsDrawer({
 
     return (
         <Drawer>
-            <DrawerTrigger asChild>
-                {drawerTrigger}
-            </DrawerTrigger>
+            <TooltipWrapper label='More Settings'>
+                <DrawerTrigger asChild>
+                    {drawerTrigger}
+                </DrawerTrigger>
+            </TooltipWrapper>
             <DrawerContent className='w-full'>
                 <div className="mx-auto w-full md:w-5xl flex flex-col gap-4 items-center justify-center px-4">
                     <DrawerHeader className='w-full'>
                         <DrawerTitle>Audio Settings</DrawerTitle>
                     </DrawerHeader>
                     <div className='w-full flex flex-col items-center justify-center gap-2'>
-                        <div className='w-full flex flex-col md:flex-row items-start md:items-center justify-center md:justify-between md:gap-6 gap-2'>
-                            <p className='text-xs md:text-sm whitespace-nowrap'>Audio Input</p>
-                            <SettingsCombobox
-                                items={availableAudioInputs}
-                                activeItem={activeAudioInput}
-                                onSelect={switchAudioInput}
-                            />
-                        </div>
-                        <div className='w-full flex flex-col md:flex-row items-start md:items-center justify-center md:justify-between md:gap-6 gap-2'>
-                            <p className='text-xs md:text-sm whitespace-nowrap'>Audio Output</p>
-                            <SettingsCombobox
-                                items={availableAudioOutputs}
-                                activeItem={activeAudioOutput}
-                                onSelect={switchAudioOutput}
-                            />
-                        </div>
+                        <CallSettingsItem
+                            items={availableAudioInputs}
+                            activeItem={activeAudioInput}
+                            onSelect={switchAudioInput}
+                            label="Audio Input"
+                        />
+                        <Separator />
+                        <CallSettingsItem
+                            items={availableAudioOutputs}
+                            activeItem={activeAudioOutput}
+                            onSelect={switchAudioOutput}
+                            label="Audio Output"
+                        />
                     </div>
 
                     <DrawerFooter>
@@ -218,6 +219,6 @@ export default function AudioSettingsDrawer({
                     </DrawerFooter>
                 </div>
             </DrawerContent>
-        </Drawer>
+        </Drawer >
     )
 }

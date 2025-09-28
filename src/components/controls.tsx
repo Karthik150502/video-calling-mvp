@@ -2,7 +2,8 @@
 import React, { RefObject } from 'react'
 import { Button } from './ui/button'
 import { Mic, MicOff, PhoneOff, Settings, Video, VideoOff } from 'lucide-react'
-import AudioSettingsDrawer from './audioSettingsDrawer';
+import CallSettingsDrawer from './callSettingsDrawer';
+import TooltipWrapper from './tooltipWrapper';
 
 type ControlsProps = {
     isVideoEnabled: boolean,
@@ -52,37 +53,41 @@ export default function CallControls({
 
     return (
         <div className='w-[400px] p-4 flex items-center justify-center gap-4 fixed bottom-4'>
-            <Button
-                variant={isVideoEnabled ? "default" : "secondary"}
-                onClick={toggleVideo}
-                size={"lg"}
-                className="rounded-full"
-            >
-                {isVideoEnabled ? <Video className="w-5 h-5" /> : <VideoOff className="w-5 h-5" />}
-            </Button>
-            <Button
-                variant={isAudioEnabled ? "default" : "secondary"}
-                onClick={toggleAudio}
-                size={"lg"}
-                className="rounded-full"
-            >
-                {isAudioEnabled ? <Mic className="w-5 h-5" /> : <MicOff className="w-5 h-5" />}
-            </Button>
-            <AudioSettingsDrawer
+            <TooltipWrapper label='Video On/ Off'>
+                <Button
+                    variant={isVideoEnabled ? "default" : "secondary"}
+                    onClick={toggleVideo}
+                    size={"icon"}
+                    className="rounded-full"
+                >
+                    {isVideoEnabled ? <Video /> : <VideoOff />}
+                </Button>
+            </TooltipWrapper>
+            <TooltipWrapper label='Mic On/ Off'>
+                <Button
+                    variant={isAudioEnabled ? "default" : "secondary"}
+                    onClick={toggleAudio}
+                    size={"icon"}
+                    className="rounded-full"
+                >
+                    {isAudioEnabled ? <Mic /> : <MicOff />}
+                </Button>
+            </TooltipWrapper>
+            <CallSettingsDrawer
                 isVideoEnabled={isVideoEnabled}
                 isAudioEnabled={isAudioEnabled}
                 localStreamRef={localStreamRef}
                 replaceAudioTrackInPeerConnections={replaceAudioTrackInPeerConnections}
                 localVideoRef={localVideoRef}
                 remoteVideoRefs={remoteVideoRefs}
-                drawerTrigger={<Button size={"lg"} className='rounded-full'><Settings /></Button>}
+                drawerTrigger={<Button size="icon" className='rounded-full'><Settings /></Button>}
             />
             <Button
                 variant="destructive"
                 onClick={endCall}
-                size={"lg"}
+                size={"default"}
                 className="rounded-full">
-                <PhoneOff className="w-5 h-5" />
+                <PhoneOff />
                 End Call
             </Button>
         </div>
