@@ -14,7 +14,9 @@ type ControlsProps = {
     setIsVideoEnabled: React.Dispatch<React.SetStateAction<boolean>>,
     replaceAudioTrackInPeerConnections: (newTrack: MediaStreamTrack) => Promise<void>,
     localVideoRef: RefObject<HTMLVideoElement | null>,
-    remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>
+    remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>,
+    sendToggleAudio: (value: boolean) => void,
+    sendToggleVideo: (value: boolean) => void
 }
 
 export default function CallControls({
@@ -26,7 +28,9 @@ export default function CallControls({
     setIsVideoEnabled,
     replaceAudioTrackInPeerConnections,
     localVideoRef,
-    remoteVideoRefs
+    remoteVideoRefs,
+    sendToggleAudio,
+    sendToggleVideo
 }: ControlsProps) {
 
 
@@ -34,6 +38,7 @@ export default function CallControls({
         if (localStreamRef.current) {
             const videoTrack = localStreamRef.current.getVideoTracks()[0]
             if (videoTrack) {
+                sendToggleVideo(!videoTrack.enabled)
                 videoTrack.enabled = !videoTrack.enabled
                 setIsVideoEnabled(videoTrack.enabled)
             }
@@ -44,6 +49,7 @@ export default function CallControls({
         if (localStreamRef.current) {
             const audioTrack = localStreamRef.current.getAudioTracks()[0]
             if (audioTrack) {
+                sendToggleAudio(!audioTrack.enabled)
                 audioTrack.enabled = !audioTrack.enabled
                 setIsAudioEnabled(audioTrack.enabled)
             }

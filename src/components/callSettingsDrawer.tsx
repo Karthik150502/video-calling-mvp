@@ -14,7 +14,6 @@ import CallSettingsItem from './callSettingsItem';
 import TooltipWrapper from './tooltipWrapper';
 import { Separator } from '@radix-ui/react-separator';
 
-
 type CallSettingsProps = {
     isVideoEnabled: boolean,
     isAudioEnabled: boolean,
@@ -160,6 +159,7 @@ export default function CallSettingsDrawer({
 
 
     const handleAudioInput = useCallback(async () => {
+        console.log("Changing Audio Input")
         await enumerateDevices()
         const device = await navigator.mediaDevices.getUserMedia({
             audio: {
@@ -182,7 +182,7 @@ export default function CallSettingsDrawer({
         return () => {
             navigator.mediaDevices.removeEventListener("devicechange", enumerateDevices);
         }
-    }, [handleAudioInput, enumerateDevices])
+    }, [])
 
 
     return (

@@ -81,6 +81,17 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
         </CardHeader>
         <CardContent className="p-0">
           <div className="relative aspect-video bg-muted overflow-hidden">
+
+
+            {/* Video Disabled Overlay */}
+            {!isVideoEnabled && (
+              <div className="absolute inset-0 bg-muted flex items-center justify-center">
+                <div className="text-center">
+                  <VideoOff className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">Video disabled</p>
+                </div>
+              </div>)}
+
             <video
               ref={ref}
               autoPlay
@@ -93,16 +104,6 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
               onLoadedData={() => setIsVideoLoaded(true)}
               onError={() => setIsVideoLoaded(false)}
             />
-
-            {/* Video Disabled Overlay */}
-            {!isVideoEnabled && (
-              <div className="absolute inset-0 bg-muted flex items-center justify-center">
-                <div className="text-center">
-                  <VideoOff className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">Video disabled</p>
-                </div>
-              </div>
-            )}
 
             {/* Waiting for Connection Overlay */}
             {!isLocal && !isConnected && (
