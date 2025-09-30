@@ -1,13 +1,15 @@
 "use client"
 
-import { useRef, useEffect, RefObject } from "react"
+import { useEffect, RefObject } from "react"
 import { VideoDisplay } from "./video-display"
 import { cn } from "@/lib/utils"
 
 interface Participant {
   id: string
   stream?: MediaStream
-  connectionState: RTCPeerConnectionState
+  connectionState: RTCPeerConnectionState,
+  videoEnabled?: boolean,
+  audioEnabled?: boolean
 }
 
 interface VideoGridProps {
@@ -27,7 +29,7 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream
     }
-  }, [localStream])
+  }, [localStream, localVideoRef])
 
   // Set up remote video streams
   useEffect(() => {
@@ -76,7 +78,9 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
         {/* Remote Videos */}
         {Array.from(participants.entries()).map(([participantId, participant]) => {
           const isConnected = participant.connectionState === "connected"
-
+          console.log({
+            participant
+          })
           return (
             <VideoDisplay
               key={participantId}
@@ -89,8 +93,8 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
               }}
               title={`Participant ${participantId.slice(-4)}`}
               isLocal={false}
-              isVideoEnabled={true} // We assume remote video is enabled unless we get specific info
-              isAudioEnabled={true} // We assume remote audio is enabled unless we get specific info
+              isVideoEnabled={participant.videoEnabled} // We assume remote video is enabled unless we get specific info
+              isAudioEnabled={participant.audioEnabled} // We assume remote audio is enabled unless we get specific info
               connectionQuality={isConnected ? "good" : "poor"}
               isConnected={isConnected}
               className={cn("min-h-0", getVideoSize())}

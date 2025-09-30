@@ -10,7 +10,9 @@ interface WebRTCMessage {
 interface Participant {
   id: string
   stream?: MediaStream
-  connectionState: RTCPeerConnectionState
+  connectionState: RTCPeerConnectionState,
+  videoEnabled?: boolean,
+  audioEnabled?: boolean
 }
 
 interface UseWebRTCProps {
@@ -379,16 +381,47 @@ export function useWebRTC({
     [onError],
   )
 
-  const joinRoom = useCallback((roomId: string) => {
+  const joinRoom = useCallback((roomId: string, {
+    videoEnabled,
+    audioEnabled
+  }: {
+    videoEnabled: boolean,
+    audioEnabled: boolean
+  }) => {
     if (wsRef.current) {
       wsRef.current.send(
         JSON.stringify({
           type: "join-room",
           roomId: roomId,
+          videoEnabled,
+          audioEnabled
         }),
       )
     }
   }, [])
+
+  const toggleAudio = useCallback((value: boolean) => {
+    if (wsRef.current) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "toggle-audio",
+          roomId: roomId,
+          value
+        }),
+      )
+    }
+  }, [roomId])
+  const toggleVideo = useCallback((value: boolean) => {
+    if (wsRef.current) {
+      wsRef.current.send(
+        JSON.stringify({
+          type: "toggle-video",
+          roomId: roomId,
+          value
+        }),
+      )
+    }
+  }, [roomId])
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -415,6 +448,7 @@ export function useWebRTC({
     setRoomId(null)
     clientIdRef.current = null
   }, [])
+
 
   const connectToSignalingServer = useCallback(
     (serverUrl: string) => {
@@ -488,7 +522,7 @@ export function useWebRTC({
 
               case "new-participant":
                 console.log("New participant joined:", message.participantId)
-                const newParticipant = { id: message.participantId, connectionState: "new" as RTCPeerConnectionState }
+                const newParticipant: Participant = { id: message.participantId, connectionState: "new" as RTCPeerConnectionState, videoEnabled: message.videoEnabled, audioEnabled: message.audioEnabled }
                 setParticipants((prev) => {
                   const updated = new Map(prev)
                   updated.set(message.participantId, newParticipant)
@@ -510,6 +544,26 @@ export function useWebRTC({
 
               case "ice-candidate":
                 await handleIceCandidate(message.candidate, message.fromId)
+                break
+              case "participant-video-toggle":
+                setParticipants(prev => {
+                  const updated = new Map(prev)
+                  const participant = updated.get(message.participantId)
+                  if (participant) {
+                    participant.videoEnabled = message.value
+                  }
+                  return updated
+                })
+                break
+              case "participant-audio-toggle":
+                setParticipants(prev => {
+                  const updated = new Map(prev)
+                  const participant = updated.get(message.participantId)
+                  if (participant) {
+                    participant.audioEnabled = message.value
+                  }
+                  return updated
+                })
                 break
 
               case "participant-left":
@@ -591,6 +645,9 @@ export function useWebRTC({
     disconnect,
     clientId: clientIdRef.current,
     checkSignalingServer, // Exposed helper function
-    replaceAudioTrackInPeerConnections
+    replaceAudioTrackInPeerConnections,
+    updatePeerConnections,
+    toggleAudio,
+    toggleVideo
   }
 }

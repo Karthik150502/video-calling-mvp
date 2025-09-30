@@ -38,7 +38,9 @@ export default function VideoCallPage() {
     disconnect,
     clientId,
     checkSignalingServer,
-    replaceAudioTrackInPeerConnections
+    replaceAudioTrackInPeerConnections,
+    toggleAudio,
+    toggleVideo
   } = useWebRTC({
     onParticipantJoined: (participant) => {
       console.log("Participant joined:", participant.id)
@@ -81,9 +83,15 @@ export default function VideoCallPage() {
   const getUserMedia = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: isVideoEnabled ? { width: 1280, height: 720, frameRate: 30 } : false,
-        audio: isAudioEnabled ? { echoCancellation: true, noiseSuppression: true } : false,
+        // video: isVideoEnabled ? { width: 1280, height: 720, frameRate: 30 } : false,
+        // audio: isAudioEnabled ? { echoCancellation: true, noiseSuppression: true } : false,
+        video: { width: 1280, height: 720, frameRate: 30 },
+        audio: { echoCancellation: true, noiseSuppression: true },
       })
+      const audioTrack = stream.getAudioTracks()[0];
+      const videoTrack = stream.getVideoTracks()[0];
+      audioTrack.enabled = isAudioEnabled;
+      videoTrack.enabled = isVideoEnabled;
 
       localStreamRef.current = stream
       return stream
@@ -96,9 +104,6 @@ export default function VideoCallPage() {
   const startCall = async () => {
     setConnectionError(null);
     setIsConnecting(true);
-    setIsAudioEnabled(true); // Enabling the Audio when call is started 
-    setIsAudioEnabled(true);
-    setIsVideoEnabled(true);
 
     try {
       const stream = await getUserMedia()
@@ -112,7 +117,10 @@ export default function VideoCallPage() {
       const room = roomId || "default-room"
 
       if (!useLocalMode) {
-        joinRoom(room)
+        joinRoom(room, {
+          videoEnabled: isVideoEnabled,
+          audioEnabled: isAudioEnabled
+        })
       }
 
       setIsConnecting(false)
@@ -354,6 +362,8 @@ export default function VideoCallPage() {
             replaceAudioTrackInPeerConnections={replaceAudioTrackInPeerConnections}
             localVideoRef={localVideoRef}
             remoteVideoRefs={remoteVideoRefs}
+            sendToggleAudio={toggleAudio}
+            sendToggleVideo={toggleVideo}
           />}
         </div>
 
@@ -369,7 +379,7 @@ export default function VideoCallPage() {
                   <ol className="space-y-1 text-sm">
                     <li>1. Start the signaling server</li>
                     <li>2. Enter a room ID (optional)</li>
-                    <li>3. Click "Join Call"</li>
+                    <li>3. Click (Join Call)</li>
                     <li>4. Share room ID with multiple participants</li>
                     <li>5. Each participant joins the same room</li>
                   </ol>
