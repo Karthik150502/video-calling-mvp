@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { montserrat400 } from "@/fonts/montserrat400";
-import { ReduxProvider } from "@/redux/Provider";
 
 export const metadata: Metadata = {
   title: "Debate MVP",
@@ -18,9 +17,7 @@ export default function RootLayout({
       <body
         className={`${montserrat400.className} min-h-screen relative antialiased`}
       >
-        <ReduxProvider>
-          {children}
-        </ReduxProvider>
+        {children}
       </body>
     </html>
   );

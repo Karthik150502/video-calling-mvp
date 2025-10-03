@@ -25,13 +25,11 @@ export default function VideoCallPage() {
   const [useLocalMode, setUseLocalMode] = useState(false)
 
   const localStreamRef = useRef<MediaStream | null>(null);
-
   const { localVideoRef, remoteVideoRefs } = useHTMLVideoRefs()
 
   const {
     isConnected,
     participants,
-    roomId: currentRoomId,
     connectToSignalingServer,
     joinRoom,
     addLocalStream,
@@ -40,7 +38,9 @@ export default function VideoCallPage() {
     checkSignalingServer,
     replaceAudioTrackInPeerConnections,
     toggleAudio,
-    toggleVideo
+    toggleVideo,
+    currentMeetingId,
+    participantCount
   } = useWebRTC({
     onParticipantJoined: (participant) => {
       console.log("Participant joined:", participant.id)
@@ -61,9 +61,10 @@ export default function VideoCallPage() {
     },
   })
 
+  const participantsCount = participants.size
+
   const checkServerStatus = async () => {
     if (!signalingServerUrl) return
-
     setServerStatus("checking")
     try {
       const isOnline = await checkSignalingServer(signalingServerUrl)
@@ -83,8 +84,6 @@ export default function VideoCallPage() {
   const getUserMedia = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        // video: isVideoEnabled ? { width: 1280, height: 720, frameRate: 30 } : false,
-        // audio: isAudioEnabled ? { echoCancellation: true, noiseSuppression: true } : false,
         video: { width: 1280, height: 720, frameRate: 30 },
         audio: { echoCancellation: true, noiseSuppression: true },
       })
@@ -101,7 +100,7 @@ export default function VideoCallPage() {
     }
   }
 
-  const startCall = async () => {
+  const startCall = async (activeMeetingId?: string) => {
     setConnectionError(null);
     setIsConnecting(true);
 
@@ -116,8 +115,9 @@ export default function VideoCallPage() {
       addLocalStream(stream)
       const room = roomId || "default-room"
 
+
       if (!useLocalMode) {
-        joinRoom(room, {
+        joinRoom(activeMeetingId ? activeMeetingId : room, {
           videoEnabled: isVideoEnabled,
           audioEnabled: isAudioEnabled
         })
@@ -170,10 +170,9 @@ export default function VideoCallPage() {
 
   const getConnectionText = () => {
     const status = getConnectionStatus()
-    const participantCount = participants.size
     switch (status) {
       case "connected":
-        return participantCount > 0 ? `Connected (${participantCount + 1} total)` : "Connected"
+        return participantsCount > 0 ? `Connected (${participantsCount + 1} total)` : "Connected"
       case "connecting":
         return "Connecting..."
       case "waiting":
@@ -197,11 +196,17 @@ export default function VideoCallPage() {
   }
 
   useEffect(() => {
+    if (currentMeetingId) {
+      startCall();
+    }
+  }, [])
+
+  useEffect(() => {
     return () => {
       if (localStreamRef.current) {
         localStreamRef.current.getTracks().forEach((track) => track.stop())
       }
-      disconnect()
+      disconnect(true)
     }
   }, [disconnect])
 
@@ -221,7 +226,7 @@ export default function VideoCallPage() {
                 ID: {clientId.substring(0, 6)}
               </Badge>
             )}
-            {currentRoomId && <Badge variant="outline">Room: {currentRoomId}</Badge>}
+            {currentMeetingId && <Badge variant="outline">Room: {currentMeetingId}</Badge>}
           </div>
         </div>
 
@@ -327,6 +332,7 @@ export default function VideoCallPage() {
                 localVideoRef={localVideoRef}
                 remoteVideoRefs={remoteVideoRefs}
                 className="min-h-[400px] max-h-[80vh]"
+                participantCount={participantCount}
               />
             </div>
 
@@ -334,8 +340,9 @@ export default function VideoCallPage() {
               <ParticipantPanel
                 participants={participants}
                 clientId={clientId}
-                roomId={currentRoomId}
+                roomId={currentMeetingId}
                 className="sticky top-4"
+                participantCount={participantCount}
               />
             </div>
           </div>
@@ -344,7 +351,7 @@ export default function VideoCallPage() {
         <div className="flex justify-center gap-4 mb-8">
           {!isCallActive ? (
             <Button
-              onClick={startCall}
+              onClick={() => { startCall() }}
               size="lg"
               className="px-8"
               disabled={isConnecting || (!useLocalMode && serverStatus === "offline")}
