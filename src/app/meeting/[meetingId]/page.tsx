@@ -31,7 +31,6 @@ export default function VideoCallPage() {
     const {
         isConnected,
         participants,
-        roomId: currentRoomId,
         connectToSignalingServer,
         joinRoom,
         addLocalStream,
@@ -60,6 +59,9 @@ export default function VideoCallPage() {
             setIsConnecting(false)
         },
     })
+
+    const participantsCount = Object.keys(participants).length;
+
 
     const checkServerStatus = async () => {
         if (!signalingServerUrl) return
@@ -170,10 +172,9 @@ export default function VideoCallPage() {
 
     const getConnectionText = () => {
         const status = getConnectionStatus()
-        const participantCount = participants.size
         switch (status) {
             case "connected":
-                return participantCount > 0 ? `Connected (${participantCount + 1} total)` : "Connected"
+                return participantsCount > 0 ? `Connected (${participantsCount + 1} total)` : "Connected"
             case "connecting":
                 return "Connecting..."
             case "waiting":
@@ -249,7 +250,6 @@ export default function VideoCallPage() {
                             <ParticipantPanel
                                 participants={participants}
                                 clientId={clientId}
-                                roomId={currentRoomId}
                                 className="sticky top-4"
                             />
                         </div>

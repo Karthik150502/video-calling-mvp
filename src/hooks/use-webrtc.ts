@@ -1,18 +1,12 @@
 "use client"
 
-import { useRef, useCallback, useState } from "react"
+import { Participant } from "@/types/call"
+import useStore, { Participants } from "@/zustand/stores/store"
+import { useRef, useCallback, useState, useEffect } from "react"
 
 interface WebRTCMessage {
   type: string
   [key: string]: any
-}
-
-interface Participant {
-  id: string
-  stream?: MediaStream
-  connectionState: RTCPeerConnectionState,
-  videoEnabled?: boolean,
-  audioEnabled?: boolean
 }
 
 interface UseWebRTCProps {
@@ -31,14 +25,34 @@ export function useWebRTC({
   onError,
 }: UseWebRTCProps = {}) {
   const [isConnected, setIsConnected] = useState(false)
-  const [participants, setParticipants] = useState<Map<string, Participant>>(new Map())
-  const [roomId, setRoomId] = useState<string | null>(null)
-
+  const { setParticipants, setCurrentMeetingId, currentMeetingId } = useStore();
+  const participants = useStore(state => state.participants)
+  const [participantsFmt, setParticipantsFormatted] = useState<Participants>(new Map());
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map())
   const localStreamRef = useRef<MediaStream | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const clientIdRef = useRef<string | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    console.log("Hydration finished?", useStore.persist.hasHydrated())
+    useStore.persist.onFinishHydration(() => {
+      console.log("✅ Persist hydration complete")
+    })
+  }, [])
+
+  useEffect(() => {
+    const updated = (participants instanceof Map
+      ? new Map(participants)
+      : new Map(Object.entries(participants ?? {}))) as Participants;
+    setParticipantsFormatted(updated)
+    console.log("participants value:", participants)
+    console.log("isMap?", participants instanceof Map)
+    console.log({
+      updated,
+      participants
+    })
+  }, [participants])
 
   const iceServers = [
     { urls: "stun:stun.l.google.com:19302" },
@@ -84,7 +98,7 @@ export function useWebRTC({
         console.log("Received remote stream from", participantId, "tracks:", event.streams[0]?.getTracks().length)
         if (event.streams[0]) {
           setParticipants((prev) => {
-            const updated = new Map(prev)
+            const updated = new Map(prev);
             const participant = updated.get(participantId) || {
               id: participantId,
               connectionState: "new" as RTCPeerConnectionState,
@@ -107,7 +121,7 @@ export function useWebRTC({
         console.log("Signaling state:", pc.signalingState)
 
         setParticipants((prev) => {
-          const updated = new Map(prev)
+          const updated = new Map(prev);
           const participant = updated.get(participantId) || { id: participantId, connectionState: pc.connectionState }
           participant.connectionState = pc.connectionState
           updated.set(participantId, participant)
@@ -405,25 +419,25 @@ export function useWebRTC({
       wsRef.current.send(
         JSON.stringify({
           type: "toggle-audio",
-          roomId: roomId,
+          roomId: currentMeetingId,
           value
         }),
       )
     }
-  }, [roomId])
+  }, [currentMeetingId])
   const toggleVideo = useCallback((value: boolean) => {
     if (wsRef.current) {
       wsRef.current.send(
         JSON.stringify({
           type: "toggle-video",
-          roomId: roomId,
+          roomId: currentMeetingId,
           value
         }),
       )
     }
-  }, [roomId])
+  }, [currentMeetingId])
 
-  const disconnect = useCallback(() => {
+  const disconnect = useCallback((cleanUp?: boolean) => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
     }
@@ -445,7 +459,9 @@ export function useWebRTC({
 
     setIsConnected(false)
     setParticipants(new Map())
-    setRoomId(null)
+    if (!cleanUp) {
+      setCurrentMeetingId(null);
+    }
     clientIdRef.current = null
   }, [])
 
@@ -490,7 +506,7 @@ export function useWebRTC({
                 break
 
               case "room-joined":
-                setRoomId(message.roomId)
+                setCurrentMeetingId(message.roomId)
                 console.log("Joined room", message.roomId, "with", message.participantCount, "participants")
                 break
 
@@ -507,7 +523,7 @@ export function useWebRTC({
                   }
 
                   setParticipants((prev) => {
-                    const updated = new Map(prev)
+                    const updated = new Map(prev);
                     updated.set(participantId, { id: participantId, connectionState: "new" })
                     return updated
                   })
@@ -524,7 +540,7 @@ export function useWebRTC({
                 console.log("New participant joined:", message.participantId)
                 const newParticipant: Participant = { id: message.participantId, connectionState: "new" as RTCPeerConnectionState, videoEnabled: message.videoEnabled, audioEnabled: message.audioEnabled }
                 setParticipants((prev) => {
-                  const updated = new Map(prev)
+                  const updated = new Map(prev);
                   updated.set(message.participantId, newParticipant)
                   return updated
                 })
@@ -547,7 +563,7 @@ export function useWebRTC({
                 break
               case "participant-video-toggle":
                 setParticipants(prev => {
-                  const updated = new Map(prev)
+                  const updated = new Map(prev);
                   const participant = updated.get(message.participantId)
                   if (participant) {
                     participant.videoEnabled = message.value
@@ -557,7 +573,7 @@ export function useWebRTC({
                 break
               case "participant-audio-toggle":
                 setParticipants(prev => {
-                  const updated = new Map(prev)
+                  const updated = new Map(prev);
                   const participant = updated.get(message.participantId)
                   if (participant) {
                     participant.audioEnabled = message.value
@@ -575,7 +591,7 @@ export function useWebRTC({
                 }
 
                 setParticipants((prev) => {
-                  const updated = new Map(prev)
+                  const updated = new Map(prev);
                   updated.delete(message.participantId)
                   return updated
                 })
@@ -638,7 +654,6 @@ export function useWebRTC({
   return {
     isConnected,
     participants,
-    roomId,
     connectToSignalingServer,
     joinRoom,
     addLocalStream,
@@ -648,6 +663,7 @@ export function useWebRTC({
     replaceAudioTrackInPeerConnections,
     updatePeerConnections,
     toggleAudio,
-    toggleVideo
+    toggleVideo,
+    currentMeetingId,
   }
 }

@@ -37,6 +37,8 @@ export function ParticipantPanel({ participants, clientId, roomId, className }: 
   const [isExpanded, setIsExpanded] = useState(false)
   const [copiedRoomId, setCopiedRoomId] = useState(false)
 
+  const participantsCount = participants.size;
+
   const getConnectionIcon = (state: RTCPeerConnectionState) => {
     switch (state) {
       case "connected":
@@ -98,7 +100,7 @@ export function ParticipantPanel({ participants, clientId, roomId, className }: 
     (p) => p.connectionState === "connected",
   ).length
 
-  const totalParticipants = participants.size + 1 // +1 for local user
+  const totalParticipants = participantsCount + 1 // +1 for local user
 
   return (
     <Card className={cn("", className)}>
@@ -131,10 +133,10 @@ export function ParticipantPanel({ participants, clientId, roomId, className }: 
             <UserCheck className="w-4 h-4 text-green-500" />
             <span>{connectedParticipants + 1} connected</span>
           </div>
-          {participants.size > connectedParticipants && (
+          {participantsCount > connectedParticipants && (
             <div className="flex items-center gap-1">
               <UserX className="w-4 h-4 text-orange-500" />
-              <span>{participants.size - connectedParticipants} connecting</span>
+              <span>{participantsCount - connectedParticipants} connecting</span>
             </div>
           )}
         </div>
@@ -184,7 +186,7 @@ export function ParticipantPanel({ participants, clientId, roomId, className }: 
                 </div>
               ))}
 
-              {participants.size === 0 && (
+              {participantsCount === 0 && (
                 <div className="text-center py-6 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Waiting for participants to join...</p>

@@ -1,16 +1,10 @@
 "use client"
 
-import { useEffect, RefObject } from "react"
+import { useEffect, RefObject, useRef } from "react"
 import { VideoDisplay } from "./video-display"
 import { cn } from "@/lib/utils"
+import { Participant } from "@/types/call"
 
-interface Participant {
-  id: string
-  stream?: MediaStream
-  connectionState: RTCPeerConnectionState,
-  videoEnabled?: boolean,
-  audioEnabled?: boolean
-}
 
 interface VideoGridProps {
   localStream?: MediaStream
@@ -33,7 +27,7 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
 
   // Set up remote video streams
   useEffect(() => {
-    participants.forEach((participant, participantId) => {
+    Object.entries(participants).forEach(([participantId, participant]) => {
       const videoElement = remoteVideoRefs.current.get(participantId)
       if (videoElement && participant.stream) {
         videoElement.srcObject = participant.stream
@@ -41,8 +35,8 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
     })
   }, [participants])
 
-  const participantCount = participants.size
-  const totalVideos = participantCount + 1 // +1 for local video
+  const participantsCount = participants.size;
+  const totalVideos = participantsCount + 1 // +1 for local video
 
   // Calculate grid layout based on number of participants
   const getGridLayout = () => {
@@ -78,9 +72,6 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
         {/* Remote Videos */}
         {Array.from(participants.entries()).map(([participantId, participant]) => {
           const isConnected = participant.connectionState === "connected"
-          console.log({
-            participant
-          })
           return (
             <VideoDisplay
               key={participantId}
@@ -104,7 +95,7 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
       </div>
 
       {/* Participant Count Indicator */}
-      {participantCount > 0 && (
+      {participantsCount > 0 && (
         <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium">
           {totalVideos} participant{totalVideos !== 1 ? "s" : ""} in call
         </div>
