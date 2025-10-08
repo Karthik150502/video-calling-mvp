@@ -3,14 +3,8 @@
 import { useEffect, RefObject } from "react"
 import { VideoDisplay } from "./video-display"
 import { cn } from "@/lib/utils"
+import { Participant } from "@/types/call"
 
-interface Participant {
-  id: string
-  stream?: MediaStream
-  connectionState: RTCPeerConnectionState,
-  videoEnabled?: boolean,
-  audioEnabled?: boolean
-}
 
 interface VideoGridProps {
   localStream?: MediaStream
@@ -20,9 +14,10 @@ interface VideoGridProps {
   className?: string,
   localVideoRef: RefObject<HTMLVideoElement | null>,
   remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>,
+  participantCount: number
 }
 
-export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEnabled, className, localVideoRef, remoteVideoRefs }: VideoGridProps) {
+export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEnabled, className, localVideoRef, remoteVideoRefs, participantCount }: VideoGridProps) {
 
   // Set up local video stream
   useEffect(() => {
@@ -33,7 +28,7 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
 
   // Set up remote video streams
   useEffect(() => {
-    participants.forEach((participant, participantId) => {
+    Array.from(participants.entries()).forEach(([participantId, participant]) => {
       const videoElement = remoteVideoRefs.current.get(participantId)
       if (videoElement && participant.stream) {
         videoElement.srcObject = participant.stream
@@ -41,7 +36,6 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
     })
   }, [participants])
 
-  const participantCount = participants.size
   const totalVideos = participantCount + 1 // +1 for local video
 
   // Calculate grid layout based on number of participants
@@ -78,9 +72,6 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
         {/* Remote Videos */}
         {Array.from(participants.entries()).map(([participantId, participant]) => {
           const isConnected = participant.connectionState === "connected"
-          console.log({
-            participant
-          })
           return (
             <VideoDisplay
               key={participantId}
