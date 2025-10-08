@@ -30,7 +30,7 @@ export function VideoGrid({ localStream, participants, isVideoEnabled, isAudioEn
   useEffect(() => {
     Array.from(participants.entries()).forEach(([participantId, participant]) => {
       const videoElement = remoteVideoRefs.current.get(participantId)
-      if (videoElement && participant.stream) {
+      if (videoElement && participant.stream instanceof MediaStream) {
         videoElement.srcObject = participant.stream
       }
     })
