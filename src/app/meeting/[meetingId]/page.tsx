@@ -1,31 +1,37 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Phone, Users, Settings, AlertCircle, CheckCircle } from "lucide-react"
+import { Users } from "lucide-react"
 import { useWebRTC } from "@/hooks/use-webrtc"
 import { VideoGrid } from "@/components/video-grid"
 import { ParticipantPanel } from "@/components/participant-panel"
 import CallControls from "@/components/controls"
 import { useHTMLVideoRefs } from "@/hooks/use-VideoRefs"
+import { useParams } from "next/navigation";
+import useStore from "@/zustand/stores/store"
+import { useRouter } from "next/navigation"
 
-export default function VideoCallPage() {
-    const [isCallActive, setIsCallActive] = useState(false)
+export default function MeetingPage() {
+    const [isCallActive, setIsCallActive] = useState(false);
+    const { setCurrentMeetingId } = useStore();
     const [isVideoEnabled, setIsVideoEnabled] = useState(true)
     const [isAudioEnabled, setIsAudioEnabled] = useState(true)
-    const [roomId, setRoomId] = useState("")
+    const params = useParams();
     const [signalingServerUrl, setSignalingServerUrl] = useState("ws://localhost:3001")
     const [connectionError, setConnectionError] = useState<string | null>(null)
     const [isConnecting, setIsConnecting] = useState(false)
     const [serverStatus, setServerStatus] = useState<"unknown" | "checking" | "online" | "offline">("unknown")
-    const [useLocalMode, setUseLocalMode] = useState(false)
+    const [useLocalMode, setUseLocalMode] = useState(false);
+    const router = useRouter();
+
+    useEffect(() => {
+        const id = params.meetingId ? params.meetingId[0] : ""
+        console.log({ meetingId: id })
+        setCurrentMeetingId(id)
+    }, [params])
 
     const localStreamRef = useRef<MediaStream | null>(null);
-
     const { localVideoRef, remoteVideoRefs } = useHTMLVideoRefs()
 
     const {
@@ -39,7 +45,9 @@ export default function VideoCallPage() {
         checkSignalingServer,
         replaceAudioTrackInPeerConnections,
         toggleAudio,
-        toggleVideo
+        toggleVideo,
+        currentMeetingId,
+        participantCount
     } = useWebRTC({
         onParticipantJoined: (participant) => {
             console.log("Participant joined:", participant.id)
@@ -60,12 +68,10 @@ export default function VideoCallPage() {
         },
     })
 
-    const participantsCount = Object.keys(participants).length;
-
+    const participantsCount = participants.size
 
     const checkServerStatus = async () => {
         if (!signalingServerUrl) return
-
         setServerStatus("checking")
         try {
             const isOnline = await checkSignalingServer(signalingServerUrl)
@@ -85,8 +91,6 @@ export default function VideoCallPage() {
     const getUserMedia = async () => {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({
-                // video: isVideoEnabled ? { width: 1280, height: 720, frameRate: 30 } : false,
-                // audio: isAudioEnabled ? { echoCancellation: true, noiseSuppression: true } : false,
                 video: { width: 1280, height: 720, frameRate: 30 },
                 audio: { echoCancellation: true, noiseSuppression: true },
             })
@@ -103,7 +107,7 @@ export default function VideoCallPage() {
         }
     }
 
-    const startCall = async () => {
+    const startCall = async (activeMeetingId?: string) => {
         setConnectionError(null);
         setIsConnecting(true);
 
@@ -111,19 +115,15 @@ export default function VideoCallPage() {
             const stream = await getUserMedia()
             setIsCallActive(true)
 
-            if (!useLocalMode) {
-                await connectToSignalingServer(`${signalingServerUrl}?clientId=${"idFromSupabaseSession"}`)
-            }
+            await connectToSignalingServer(`${signalingServerUrl}?clientId=${"idFromSupabaseSession"}`)
 
             addLocalStream(stream)
-            const room = roomId || "default-room"
+            const room = activeMeetingId || "default-room"
 
-            if (!useLocalMode) {
-                joinRoom(room, {
-                    videoEnabled: isVideoEnabled,
-                    audioEnabled: isAudioEnabled
-                })
-            }
+            joinRoom(room, {
+                videoEnabled: isVideoEnabled,
+                audioEnabled: isAudioEnabled
+            })
 
             setIsConnecting(false)
         } catch (error) {
@@ -145,6 +145,7 @@ export default function VideoCallPage() {
         }
 
         disconnect()
+        router.push("/");
         setIsCallActive(false)
         localStreamRef.current = null
         setConnectionError(null)
@@ -184,91 +185,81 @@ export default function VideoCallPage() {
         }
     }
 
-    const getServerStatusDisplay = () => {
-        switch (serverStatus) {
-            case "online":
-                return { icon: CheckCircle, text: "Server Online", variant: "default" as const }
-            case "offline":
-                return { icon: AlertCircle, text: "Server Offline", variant: "destructive" as const }
-            case "checking":
-                return { icon: AlertCircle, text: "Checking...", variant: "secondary" as const }
-            default:
-                return { icon: AlertCircle, text: "Unknown", variant: "outline" as const }
+    useEffect(() => {
+        if (currentMeetingId) {
+            startCall(currentMeetingId);
         }
-    }
+    }, [currentMeetingId])
 
     useEffect(() => {
         return () => {
             if (localStreamRef.current) {
                 localStreamRef.current.getTracks().forEach((track) => track.stop())
             }
-            disconnect()
+            disconnect(true)
         }
     }, [disconnect])
 
     return (
         <div className="min-h-screen bg-background p-4">
             <div className="max-w-7xl mx-auto">
-
-
-                {connectionError && (
-                    <Card className="mb-6 max-w-2xl mx-auto border-destructive">
-                        <CardContent className="pt-6">
-                            <div className="flex items-start gap-3">
-                                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-                                <div>
-                                    <h4 className="font-semibold text-destructive mb-1">Connection Failed</h4>
-                                    <p className="text-sm text-muted-foreground mb-3">{connectionError}</p>
-                                    <div className="text-xs text-muted-foreground">
-                                        <p>• Make sure the signaling server is running on {signalingServerUrl}</p>
-                                        <p>
-                                            • Run: <code className="bg-muted px-1 rounded">cd server && npm install && npm start</code>
-                                        </p>
-                                        <p>• Check that the WebSocket URL is correct</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                )}
-
-                {isCallActive && (
-                    <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
-                        <div className="xl:col-span-3">
-                            <VideoGrid
-                                localStream={localStreamRef.current || undefined}
-                                participants={participants}
-                                isVideoEnabled={isVideoEnabled}
-                                isAudioEnabled={isAudioEnabled}
-                                localVideoRef={localVideoRef}
-                                remoteVideoRefs={remoteVideoRefs}
-                                className="min-h-[400px] max-h-[80vh]"
-                            />
-                        </div>
-
-                        <div className="xl:col-span-1">
-                            <ParticipantPanel
-                                participants={participants}
-                                clientId={clientId}
-                                className="sticky top-4"
-                            />
-                        </div>
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl font-bold text-foreground mb-2 text-balance">Multi-Peer Video Call</h1>
+                    <p className="text-muted-foreground text-pretty">
+                        Group video calling with WebRTC - supports 2 or more participants
+                    </p>
+                    <div className="mt-4 flex items-center justify-center gap-4 flex-wrap">
+                        <Badge variant={getConnectionBadgeVariant()}>{getConnectionText()}</Badge>
+                        {clientId && (
+                            <Badge variant="outline">
+                                <Users className="w-3 h-3 mr-1" />
+                                ID: {clientId.substring(0, 6)}
+                            </Badge>
+                        )}
+                        {currentMeetingId && <Badge variant="outline">Room: {currentMeetingId}</Badge>}
                     </div>
-                )}
+                </div>
 
-                <CallControls
-                    isVideoEnabled={isVideoEnabled}
-                    isAudioEnabled={isAudioEnabled}
-                    setIsAudioEnabled={setIsAudioEnabled}
-                    setIsVideoEnabled={setIsVideoEnabled}
-                    endCall={endCall}
-                    localStreamRef={localStreamRef}
-                    replaceAudioTrackInPeerConnections={replaceAudioTrackInPeerConnections}
-                    localVideoRef={localVideoRef}
-                    remoteVideoRefs={remoteVideoRefs}
-                    sendToggleAudio={toggleAudio}
-                    sendToggleVideo={toggleVideo}
-                />
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
+                    <div className="xl:col-span-3">
+                        <VideoGrid
+                            localStream={localStreamRef.current || undefined}
+                            participants={participants}
+                            isVideoEnabled={isVideoEnabled}
+                            isAudioEnabled={isAudioEnabled}
+                            localVideoRef={localVideoRef}
+                            remoteVideoRefs={remoteVideoRefs}
+                            className="min-h-[400px] max-h-[80vh]"
+                            participantCount={participantCount}
+                        />
+                    </div>
+
+                    <div className="xl:col-span-1">
+                        <ParticipantPanel
+                            participants={participants}
+                            clientId={clientId}
+                            roomId={currentMeetingId}
+                            className="sticky top-4"
+                            participantCount={participantCount}
+                        />
+                    </div>
+                </div>
+
+                <div className="flex justify-center gap-4 mb-8">
+                    <CallControls
+                        isVideoEnabled={isVideoEnabled}
+                        isAudioEnabled={isAudioEnabled}
+                        setIsAudioEnabled={setIsAudioEnabled}
+                        setIsVideoEnabled={setIsVideoEnabled}
+                        endCall={endCall}
+                        localStreamRef={localStreamRef}
+                        replaceAudioTrackInPeerConnections={replaceAudioTrackInPeerConnections}
+                        localVideoRef={localVideoRef}
+                        remoteVideoRefs={remoteVideoRefs}
+                        sendToggleAudio={toggleAudio}
+                        sendToggleVideo={toggleVideo}
+                    />
+                </div>
             </div>
         </div>
     )
