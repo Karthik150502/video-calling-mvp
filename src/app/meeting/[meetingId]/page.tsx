@@ -22,11 +22,11 @@ export default function MeetingPage() {
     const [connectionError, setConnectionError] = useState<string | null>(null)
     const [isConnecting, setIsConnecting] = useState(false)
     const [serverStatus, setServerStatus] = useState<"unknown" | "checking" | "online" | "offline">("unknown")
-    const [useLocalMode, setUseLocalMode] = useState(false);
     const router = useRouter();
 
     useEffect(() => {
-        const id = params.meetingId ? params.meetingId[0] : ""
+        const id = params.meetingId ? Array.isArray(params.meetingId) ? params.meetingId[0] : params.meetingId : ""
+
         console.log({ meetingId: id })
         setCurrentMeetingId(id)
     }, [params])
@@ -35,7 +35,6 @@ export default function MeetingPage() {
     const { localVideoRef, remoteVideoRefs } = useHTMLVideoRefs()
 
     const {
-        isConnected,
         participants,
         connectToSignalingServer,
         joinRoom,
@@ -43,7 +42,7 @@ export default function MeetingPage() {
         disconnect,
         clientId,
         checkSignalingServer,
-        replaceAudioTrackInPeerConnections,
+        replaceAudioVideoTrackInPeerConnections,
         toggleAudio,
         toggleVideo,
         currentMeetingId,
@@ -67,8 +66,6 @@ export default function MeetingPage() {
             setIsConnecting(false)
         },
     })
-
-    const participantsCount = participants.size
 
     const checkServerStatus = async () => {
         if (!signalingServerUrl) return
@@ -98,8 +95,6 @@ export default function MeetingPage() {
             const videoTrack = stream.getVideoTracks()[0];
             audioTrack.enabled = isAudioEnabled;
             videoTrack.enabled = isVideoEnabled;
-
-            localStreamRef.current = stream
             return stream
         } catch (error) {
             console.error("Error accessing media devices:", error)
@@ -113,6 +108,7 @@ export default function MeetingPage() {
 
         try {
             const stream = await getUserMedia()
+            localStreamRef.current = stream;
             setIsCallActive(true)
 
             await connectToSignalingServer(`${signalingServerUrl}?clientId=${"idFromSupabaseSession"}`)
@@ -139,51 +135,29 @@ export default function MeetingPage() {
         }
     }
 
-    const endCall = () => {
+    const disconnectCall = () => {
+        // Stop all local media tracks
         if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach((track) => track.stop())
+            localStreamRef.current.getTracks().forEach((track) => {
+                track.stop()
+            })
+            localStreamRef.current = null
         }
 
+        if (localVideoRef.current) {
+            localVideoRef.current.srcObject = null;
+        }
         disconnect()
+    }
+
+    const endCall = () => {
+        // disconnectCall();
         router.push("/");
         setIsCallActive(false)
-        localStreamRef.current = null
         setConnectionError(null)
         setIsConnecting(false)
     }
 
-    const getConnectionStatus = () => {
-        if (!isCallActive) return "disconnected"
-        if (isConnecting) return "connecting"
-        if (isConnected) return "connected"
-        return "waiting"
-    }
-
-    const getConnectionBadgeVariant = () => {
-        const status = getConnectionStatus()
-        switch (status) {
-            case "connected":
-                return "default"
-            case "connecting":
-                return "secondary"
-            default:
-                return "outline"
-        }
-    }
-
-    const getConnectionText = () => {
-        const status = getConnectionStatus()
-        switch (status) {
-            case "connected":
-                return participantsCount > 0 ? `Connected (${participantsCount + 1} total)` : "Connected"
-            case "connecting":
-                return "Connecting..."
-            case "waiting":
-                return "Waiting for participants..."
-            default:
-                return "Disconnected"
-        }
-    }
 
     useEffect(() => {
         if (currentMeetingId) {
@@ -192,34 +166,16 @@ export default function MeetingPage() {
     }, [currentMeetingId])
 
     useEffect(() => {
+        window.addEventListener("unload", disconnectCall)
         return () => {
-            if (localStreamRef.current) {
-                localStreamRef.current.getTracks().forEach((track) => track.stop())
-            }
-            disconnect(true)
+            disconnectCall()
+            window.removeEventListener("unload", disconnectCall)
         }
-    }, [disconnect])
+    }, [])
 
     return (
         <div className="min-h-screen bg-background p-4">
             <div className="max-w-7xl mx-auto">
-                <div className="text-center mb-8">
-                    <h1 className="text-4xl font-bold text-foreground mb-2 text-balance">Multi-Peer Video Call</h1>
-                    <p className="text-muted-foreground text-pretty">
-                        Group video calling with WebRTC - supports 2 or more participants
-                    </p>
-                    <div className="mt-4 flex items-center justify-center gap-4 flex-wrap">
-                        <Badge variant={getConnectionBadgeVariant()}>{getConnectionText()}</Badge>
-                        {clientId && (
-                            <Badge variant="outline">
-                                <Users className="w-3 h-3 mr-1" />
-                                ID: {clientId.substring(0, 6)}
-                            </Badge>
-                        )}
-                        {currentMeetingId && <Badge variant="outline">Room: {currentMeetingId}</Badge>}
-                    </div>
-                </div>
-
                 <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
                     <div className="xl:col-span-3">
                         <VideoGrid
@@ -253,7 +209,7 @@ export default function MeetingPage() {
                         setIsVideoEnabled={setIsVideoEnabled}
                         endCall={endCall}
                         localStreamRef={localStreamRef}
-                        replaceAudioTrackInPeerConnections={replaceAudioTrackInPeerConnections}
+                        replaceAudioVideoTrackInPeerConnections={replaceAudioVideoTrackInPeerConnections}
                         localVideoRef={localVideoRef}
                         remoteVideoRefs={remoteVideoRefs}
                         sendToggleAudio={toggleAudio}

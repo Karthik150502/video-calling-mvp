@@ -1,8 +1,8 @@
 "use client"
 
 import { Participant } from "@/types/call"
-import useStore, { Participants } from "@/zustand/stores/store"
-import { useRef, useCallback, useState, useEffect } from "react"
+import useStore from "@/zustand/stores/store"
+import { useRef, useCallback, useState } from "react"
 
 interface WebRTCMessage {
   type: string
@@ -187,7 +187,7 @@ export function useWebRTC({
     })
   }, [])
 
-  const replaceAudioTrackInPeerConnections = useCallback(async (newTrack: MediaStreamTrack) => {
+  const replaceAudioVideoTrackInPeerConnections = useCallback(async (newTrack: MediaStreamTrack, replaceAudio: boolean = true) => {
     if (!peerConnectionsRef.current) {
       console.log('No peer connections available, falling back to updatePeerConnections');
       if (localStreamRef.current) {
@@ -195,44 +195,46 @@ export function useWebRTC({
       }
       return;
     }
+    const track = replaceAudio ? "audio" : "video"
 
-    console.log('Replacing audio track in', peerConnectionsRef.current.size, 'peer connections');
+    console.log(`Replacing ${track} track in`, peerConnectionsRef.current.size, 'peer connections');
 
     const replacePromises = Array.from(peerConnectionsRef.current.entries()).map(async ([participantId, pc]) => {
       try {
         // Find the audio sender
-        const audioSender = pc.getSenders().find(sender =>
-          sender.track && sender.track.kind === 'audio'
+        const sender = pc.getSenders().find(sender =>
+          sender.track && sender.track.kind === track
         );
 
-        if (audioSender) {
-          console.log(`Replacing audio track for participant ${participantId}`);
-          await audioSender.replaceTrack(newTrack);
-          console.log(`Successfully replaced audio track for participant ${participantId}`);
+        if (sender) {
+          console.log(`Replacing ${track} track for participant ${participantId}`);
+          await sender.replaceTrack(newTrack);
+          console.log(`Successfully replaced ${track} track for participant ${participantId}`);
         } else {
-          console.log(`No audio sender found for participant ${participantId}, adding track`);
+          console.log(`No ${track} sender found for participant ${participantId}, adding track`);
           pc.addTrack(newTrack, localStreamRef.current!);
         }
       } catch (error) {
-        console.error(`Error replacing track for participant ${participantId}:`, error);
+        console.error(`Error replacing track for participant ${participantId}: `, error);
         // Fallback: try removing and adding the track
         try {
-          const audioSender = pc.getSenders().find(sender =>
-            sender.track && sender.track.kind === 'audio'
+          const sender = pc.getSenders().find(sender =>
+            sender.track && sender.track.kind === track
           );
-          if (audioSender) {
-            pc.removeTrack(audioSender);
+          if (sender) {
+            pc.removeTrack(sender);
           }
           pc.addTrack(newTrack, localStreamRef.current!);
           console.log(`Fallback successful for participant ${participantId}`);
         } catch (fallbackError) {
-          console.error(`Fallback also failed for participant ${participantId}:`, fallbackError);
+          console.error(`Fallback also failed for participant ${participantId}: `, fallbackError);
         }
       }
     });
 
     await Promise.allSettled(replacePromises);
   }, [updatePeerConnections]);
+
 
   const addLocalStream = useCallback((stream: MediaStream) => {
     console.log("Adding local stream with tracks:", stream.getTracks().length)
@@ -417,7 +419,7 @@ export function useWebRTC({
     }
   }, [currentMeetingId])
 
-  const disconnect = useCallback((cleanUp?: boolean) => {
+  const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
       clearTimeout(reconnectTimeoutRef.current)
     }
@@ -439,9 +441,7 @@ export function useWebRTC({
 
     setIsConnected(false)
     setParticipants(new Map())
-    if (!cleanUp) {
-      setCurrentMeetingId(null);
-    }
+    setCurrentMeetingId(null);
     clientIdRef.current = null
   }, [])
 
@@ -477,7 +477,7 @@ export function useWebRTC({
         ws.onmessage = async (event) => {
           try {
             const message: WebRTCMessage = JSON.parse(event.data)
-            console.log("Received message:", message.type, message.fromId ? `from ${message.fromId}` : "")
+            console.log("Received message:", message.type, message.fromId ? `from ${message.fromId} ` : "")
 
             switch (message.type) {
               case "client-id":
@@ -640,7 +640,7 @@ export function useWebRTC({
     disconnect,
     clientId: clientIdRef.current,
     checkSignalingServer, // Exposed helper function
-    replaceAudioTrackInPeerConnections,
+    replaceAudioVideoTrackInPeerConnections,
     updatePeerConnections,
     toggleAudio,
     toggleVideo,
