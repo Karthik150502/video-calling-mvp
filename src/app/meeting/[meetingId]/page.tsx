@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
+import { Badge } from "@/components/ui/badge"
+import { Users } from "lucide-react"
 import { useWebRTC } from "@/hooks/use-webrtc"
 import { VideoGrid } from "@/components/video-grid"
 import { ParticipantPanel } from "@/components/participant-panel"
