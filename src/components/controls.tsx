@@ -12,7 +12,7 @@ type ControlsProps = {
     localStreamRef: RefObject<MediaStream | null>,
     setIsAudioEnabled: React.Dispatch<React.SetStateAction<boolean>>,
     setIsVideoEnabled: React.Dispatch<React.SetStateAction<boolean>>,
-    replaceAudioTrackInPeerConnections: (newTrack: MediaStreamTrack) => Promise<void>,
+    replaceAudioVideoTrackInPeerConnections: (newTrack: MediaStreamTrack) => Promise<void>,
     localVideoRef: RefObject<HTMLVideoElement | null>,
     remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>,
     sendToggleAudio: (value: boolean) => void,
@@ -26,11 +26,11 @@ export default function CallControls({
     localStreamRef,
     setIsAudioEnabled,
     setIsVideoEnabled,
-    replaceAudioTrackInPeerConnections,
+    replaceAudioVideoTrackInPeerConnections,
     localVideoRef,
     remoteVideoRefs,
     sendToggleAudio,
-    sendToggleVideo
+    sendToggleVideo,
 }: ControlsProps) {
 
 
@@ -83,7 +83,7 @@ export default function CallControls({
                 isVideoEnabled={isVideoEnabled}
                 isAudioEnabled={isAudioEnabled}
                 localStreamRef={localStreamRef}
-                replaceAudioTrackInPeerConnections={replaceAudioTrackInPeerConnections}
+                replaceAudioVideoTrackInPeerConnections={replaceAudioVideoTrackInPeerConnections}
                 localVideoRef={localVideoRef}
                 remoteVideoRefs={remoteVideoRefs}
                 drawerTrigger={<Button size="icon" className='rounded-full'><Settings /></Button>}

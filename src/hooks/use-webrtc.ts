@@ -1,18 +1,12 @@
 "use client"
 
+import { Participant } from "@/types/call"
+import useStore from "@/zustand/stores/store"
 import { useRef, useCallback, useState } from "react"
 
 interface WebRTCMessage {
   type: string
   [key: string]: any
-}
-
-interface Participant {
-  id: string
-  stream?: MediaStream
-  connectionState: RTCPeerConnectionState,
-  videoEnabled?: boolean,
-  audioEnabled?: boolean
 }
 
 interface UseWebRTCProps {
@@ -31,14 +25,14 @@ export function useWebRTC({
   onError,
 }: UseWebRTCProps = {}) {
   const [isConnected, setIsConnected] = useState(false)
-  const [participants, setParticipants] = useState<Map<string, Participant>>(new Map())
-  const [roomId, setRoomId] = useState<string | null>(null)
-
-  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map())
+  const { setParticipants, setCurrentMeetingId, currentMeetingId } = useStore();
+  const participants = useStore(state => state.participants)
+  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const participantCount = participants.size;
   const localStreamRef = useRef<MediaStream | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const clientIdRef = useRef<string | null>(null)
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const iceServers = [
     { urls: "stun:stun.l.google.com:19302" },
@@ -75,6 +69,7 @@ export function useWebRTC({
               type: "ice-candidate",
               candidate: event.candidate,
               targetId: participantId,
+              roomId: currentMeetingId
             }),
           )
         }
@@ -84,7 +79,7 @@ export function useWebRTC({
         console.log("Received remote stream from", participantId, "tracks:", event.streams[0]?.getTracks().length)
         if (event.streams[0]) {
           setParticipants((prev) => {
-            const updated = new Map(prev)
+            const updated = new Map(prev);
             const participant = updated.get(participantId) || {
               id: participantId,
               connectionState: "new" as RTCPeerConnectionState,
@@ -107,7 +102,7 @@ export function useWebRTC({
         console.log("Signaling state:", pc.signalingState)
 
         setParticipants((prev) => {
-          const updated = new Map(prev)
+          const updated = new Map(prev);
           const participant = updated.get(participantId) || { id: participantId, connectionState: pc.connectionState }
           participant.connectionState = pc.connectionState
           updated.set(participantId, participant)
@@ -193,7 +188,7 @@ export function useWebRTC({
     })
   }, [])
 
-  const replaceAudioTrackInPeerConnections = useCallback(async (newTrack: MediaStreamTrack) => {
+  const replaceAudioVideoTrackInPeerConnections = useCallback(async (newTrack: MediaStreamTrack, replaceAudio: boolean = true) => {
     if (!peerConnectionsRef.current) {
       console.log('No peer connections available, falling back to updatePeerConnections');
       if (localStreamRef.current) {
@@ -201,44 +196,46 @@ export function useWebRTC({
       }
       return;
     }
+    const track = replaceAudio ? "audio" : "video"
 
-    console.log('Replacing audio track in', peerConnectionsRef.current.size, 'peer connections');
+    console.log(`Replacing ${track} track in`, peerConnectionsRef.current.size, 'peer connections');
 
     const replacePromises = Array.from(peerConnectionsRef.current.entries()).map(async ([participantId, pc]) => {
       try {
         // Find the audio sender
-        const audioSender = pc.getSenders().find(sender =>
-          sender.track && sender.track.kind === 'audio'
+        const sender = pc.getSenders().find(sender =>
+          sender.track && sender.track.kind === track
         );
 
-        if (audioSender) {
-          console.log(`Replacing audio track for participant ${participantId}`);
-          await audioSender.replaceTrack(newTrack);
-          console.log(`Successfully replaced audio track for participant ${participantId}`);
+        if (sender) {
+          console.log(`Replacing ${track} track for participant ${participantId}`);
+          await sender.replaceTrack(newTrack);
+          console.log(`Successfully replaced ${track} track for participant ${participantId}`);
         } else {
-          console.log(`No audio sender found for participant ${participantId}, adding track`);
+          console.log(`No ${track} sender found for participant ${participantId}, adding track`);
           pc.addTrack(newTrack, localStreamRef.current!);
         }
       } catch (error) {
-        console.error(`Error replacing track for participant ${participantId}:`, error);
+        console.error(`Error replacing track for participant ${participantId}: `, error);
         // Fallback: try removing and adding the track
         try {
-          const audioSender = pc.getSenders().find(sender =>
-            sender.track && sender.track.kind === 'audio'
+          const sender = pc.getSenders().find(sender =>
+            sender.track && sender.track.kind === track
           );
-          if (audioSender) {
-            pc.removeTrack(audioSender);
+          if (sender) {
+            pc.removeTrack(sender);
           }
           pc.addTrack(newTrack, localStreamRef.current!);
           console.log(`Fallback successful for participant ${participantId}`);
         } catch (fallbackError) {
-          console.error(`Fallback also failed for participant ${participantId}:`, fallbackError);
+          console.error(`Fallback also failed for participant ${participantId}: `, fallbackError);
         }
       }
     });
 
     await Promise.allSettled(replacePromises);
   }, [updatePeerConnections]);
+
 
   const addLocalStream = useCallback((stream: MediaStream) => {
     console.log("Adding local stream with tracks:", stream.getTracks().length)
@@ -271,6 +268,7 @@ export function useWebRTC({
             type: "offer",
             offer: offer,
             targetId: participantId,
+            roomId: currentMeetingId
           }),
         )
       } catch (error) {
@@ -320,6 +318,7 @@ export function useWebRTC({
             type: "answer",
             answer: answer,
             targetId: fromId,
+            roomId: currentMeetingId
           }),
         )
       } catch (error) {
@@ -327,7 +326,7 @@ export function useWebRTC({
         if (onError) onError(error as Error)
       }
     },
-    [createPeerConnection, onError],
+    [createPeerConnection, onError, currentMeetingId],
   )
 
   const handleAnswer = useCallback(
@@ -405,23 +404,23 @@ export function useWebRTC({
       wsRef.current.send(
         JSON.stringify({
           type: "toggle-audio",
-          roomId: roomId,
+          roomId: currentMeetingId,
           value
         }),
       )
     }
-  }, [roomId])
+  }, [currentMeetingId])
   const toggleVideo = useCallback((value: boolean) => {
     if (wsRef.current) {
       wsRef.current.send(
         JSON.stringify({
           type: "toggle-video",
-          roomId: roomId,
+          roomId: currentMeetingId,
           value
         }),
       )
     }
-  }, [roomId])
+  }, [currentMeetingId])
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -445,7 +444,7 @@ export function useWebRTC({
 
     setIsConnected(false)
     setParticipants(new Map())
-    setRoomId(null)
+    setCurrentMeetingId(null);
     clientIdRef.current = null
   }, [])
 
@@ -481,7 +480,7 @@ export function useWebRTC({
         ws.onmessage = async (event) => {
           try {
             const message: WebRTCMessage = JSON.parse(event.data)
-            console.log("Received message:", message.type, message.fromId ? `from ${message.fromId}` : "")
+            console.log("Received message:", message.type, message.fromId ? `from ${message.fromId} ` : "")
 
             switch (message.type) {
               case "client-id":
@@ -490,7 +489,7 @@ export function useWebRTC({
                 break
 
               case "room-joined":
-                setRoomId(message.roomId)
+                setCurrentMeetingId(message.roomId)
                 console.log("Joined room", message.roomId, "with", message.participantCount, "participants")
                 break
 
@@ -507,7 +506,7 @@ export function useWebRTC({
                   }
 
                   setParticipants((prev) => {
-                    const updated = new Map(prev)
+                    const updated = new Map(prev);
                     updated.set(participantId, { id: participantId, connectionState: "new" })
                     return updated
                   })
@@ -524,7 +523,7 @@ export function useWebRTC({
                 console.log("New participant joined:", message.participantId)
                 const newParticipant: Participant = { id: message.participantId, connectionState: "new" as RTCPeerConnectionState, videoEnabled: message.videoEnabled, audioEnabled: message.audioEnabled }
                 setParticipants((prev) => {
-                  const updated = new Map(prev)
+                  const updated = new Map(prev);
                   updated.set(message.participantId, newParticipant)
                   return updated
                 })
@@ -547,7 +546,7 @@ export function useWebRTC({
                 break
               case "participant-video-toggle":
                 setParticipants(prev => {
-                  const updated = new Map(prev)
+                  const updated = new Map(prev);
                   const participant = updated.get(message.participantId)
                   if (participant) {
                     participant.videoEnabled = message.value
@@ -557,7 +556,7 @@ export function useWebRTC({
                 break
               case "participant-audio-toggle":
                 setParticipants(prev => {
-                  const updated = new Map(prev)
+                  const updated = new Map(prev);
                   const participant = updated.get(message.participantId)
                   if (participant) {
                     participant.audioEnabled = message.value
@@ -575,7 +574,7 @@ export function useWebRTC({
                 }
 
                 setParticipants((prev) => {
-                  const updated = new Map(prev)
+                  const updated = new Map(prev);
                   updated.delete(message.participantId)
                   return updated
                 })
@@ -638,16 +637,17 @@ export function useWebRTC({
   return {
     isConnected,
     participants,
-    roomId,
     connectToSignalingServer,
     joinRoom,
     addLocalStream,
     disconnect,
     clientId: clientIdRef.current,
     checkSignalingServer, // Exposed helper function
-    replaceAudioTrackInPeerConnections,
+    replaceAudioVideoTrackInPeerConnections,
     updatePeerConnections,
     toggleAudio,
-    toggleVideo
+    toggleVideo,
+    currentMeetingId,
+    participantCount
   }
 }

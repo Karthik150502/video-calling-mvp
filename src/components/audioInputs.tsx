@@ -23,11 +23,17 @@ import {
 export function SettingsCombobox({
     items,
     activeItem,
-    onSelect
+    onSelect,
+    emptyCommandLabel,
+    searchInputLabel,
+    selectItemLabel
 }: {
     activeItem: string | undefined
     items: { value: string, label: string }[],
     onSelect: (deviceId: string) => void,
+    emptyCommandLabel: string,
+    searchInputLabel: string,
+    selectItemLabel: string
 }) {
     const [open, setOpen] = React.useState(false)
 
@@ -42,17 +48,17 @@ export function SettingsCombobox({
                 >
                     {activeItem
                         ? items.find((item) => item.value === activeItem)?.label
-                        : "Select Audio Input..."}
+                        : selectItemLabel}
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="md:w-fit w-[90dvw] p-0">
                 <Command>
                     {
-                        items.length > 10 && <CommandInput placeholder="Search framework..." />
+                        items.length > 10 && <CommandInput placeholder={searchInputLabel} />
                     }
                     <CommandList>
-                        <CommandEmpty>No Audio Device found.</CommandEmpty>
+                        <CommandEmpty>{emptyCommandLabel}</CommandEmpty>
                         <CommandGroup>
                             {items.map((item) => (
                                 <CommandItem

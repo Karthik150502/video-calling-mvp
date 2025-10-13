@@ -19,21 +19,17 @@ import {
   Check,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-
-interface Participant {
-  id: string
-  stream?: MediaStream
-  connectionState: RTCPeerConnectionState
-}
+import { Participant } from "@/types/call"
 
 interface ParticipantPanelProps {
   participants: Map<string, Participant>
   clientId?: string | null
   roomId?: string | null
-  className?: string
+  className?: string,
+  participantCount: number
 }
 
-export function ParticipantPanel({ participants, clientId, roomId, className }: ParticipantPanelProps) {
+export function ParticipantPanel({ participants, clientId, roomId, className, participantCount }: ParticipantPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false)
   const [copiedRoomId, setCopiedRoomId] = useState(false)
 
@@ -98,7 +94,7 @@ export function ParticipantPanel({ participants, clientId, roomId, className }: 
     (p) => p.connectionState === "connected",
   ).length
 
-  const totalParticipants = participants.size + 1 // +1 for local user
+  const totalParticipants = participantCount + 1 // +1 for local user
 
   return (
     <Card className={cn("", className)}>
@@ -131,10 +127,10 @@ export function ParticipantPanel({ participants, clientId, roomId, className }: 
             <UserCheck className="w-4 h-4 text-green-500" />
             <span>{connectedParticipants + 1} connected</span>
           </div>
-          {participants.size > connectedParticipants && (
+          {participantCount > connectedParticipants && (
             <div className="flex items-center gap-1">
               <UserX className="w-4 h-4 text-orange-500" />
-              <span>{participants.size - connectedParticipants} connecting</span>
+              <span>{participantCount - connectedParticipants} connecting</span>
             </div>
           )}
         </div>
@@ -184,7 +180,7 @@ export function ParticipantPanel({ participants, clientId, roomId, className }: 
                 </div>
               ))}
 
-              {participants.size === 0 && (
+              {participantCount === 0 && (
                 <div className="text-center py-6 text-muted-foreground">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p className="text-sm">Waiting for participants to join...</p>
