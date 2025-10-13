@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -11,9 +11,6 @@ import { useWebRTC } from "@/hooks/use-webrtc"
 import { useRouter } from "next/navigation"
 
 export default function VideoCallPage() {
-  const [isCallActive, setIsCallActive] = useState(false)
-  const [isVideoEnabled, setIsVideoEnabled] = useState(true)
-  const [isAudioEnabled, setIsAudioEnabled] = useState(true)
   const [roomId, setRoomId] = useState("")
   const [signalingServerUrl, setSignalingServerUrl] = useState("ws://localhost:3001")
   const [connectionError, setConnectionError] = useState<string | null>(null)
@@ -22,13 +19,9 @@ export default function VideoCallPage() {
   const [useLocalMode, setUseLocalMode] = useState(false);
   const router = useRouter();
 
-  const localStreamRef = useRef<MediaStream | null>(null);
 
   const {
-    addLocalStream,
-    disconnect,
-    checkSignalingServer,
-    currentMeetingId,
+    checkSignalingServer
   } = useWebRTC({
     onParticipantJoined: (participant) => {
       console.log("Participant joined:", participant.id)
@@ -68,46 +61,6 @@ export default function VideoCallPage() {
     }
   }, [signalingServerUrl])
 
-  const getUserMedia = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 1280, height: 720, frameRate: 30 },
-        audio: { echoCancellation: true, noiseSuppression: true },
-      })
-      const audioTrack = stream.getAudioTracks()[0];
-      const videoTrack = stream.getVideoTracks()[0];
-      audioTrack.enabled = isAudioEnabled;
-      videoTrack.enabled = isVideoEnabled;
-
-      localStreamRef.current = stream
-      return stream
-    } catch (error) {
-      console.error("Error accessing media devices:", error)
-      throw error
-    }
-  }
-
-  const startLocalCall = async () => {
-    try {
-      const stream = await getUserMedia()
-      setIsCallActive(true)
-      addLocalStream(stream)
-
-      setIsConnecting(false)
-    } catch (error) {
-      console.error("Failed to start call:", error)
-      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred"
-      setConnectionError(errorMessage)
-      setIsCallActive(false)
-      setIsConnecting(false)
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => track.stop())
-        localStreamRef.current = null
-      }
-    }
-  }
-
-
   const getServerStatusDisplay = () => {
     switch (serverStatus) {
       case "online":
@@ -120,15 +73,6 @@ export default function VideoCallPage() {
         return { icon: AlertCircle, text: "Unknown", variant: "outline" as const }
     }
   }
-
-  useEffect(() => {
-    return () => {
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => track.stop())
-      }
-      disconnect(true)
-    }
-  }, [disconnect])
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -223,7 +167,7 @@ export default function VideoCallPage() {
 
         <div className="flex justify-center gap-4 mb-8">
           <Button
-            onClick={() => {
+            onClick={async () => {
               router.push(`/meeting/${roomId}`);
             }}
             size="lg"
