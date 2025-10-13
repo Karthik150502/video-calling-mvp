@@ -55,34 +55,8 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
 
     return (
       <Card className={cn("overflow-hidden", className)}>
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">{title}</CardTitle>
-            <div className="flex items-center gap-2">
-              {/* Audio/Video Status */}
-              <div className="flex gap-1">
-                <Badge variant={isVideoEnabled ? "default" : "secondary"} className="px-2 py-1">
-                  {isVideoEnabled ? <Video className="w-3 h-3" /> : <VideoOff className="w-3 h-3" />}
-                </Badge>
-                <Badge variant={isAudioEnabled ? "default" : "secondary"} className="px-2 py-1">
-                  {isAudioEnabled ? <Mic className="w-3 h-3" /> : <MicOff className="w-3 h-3" />}
-                </Badge>
-              </div>
-
-              {/* Connection Quality */}
-              {connectionQuality && (
-                <Badge variant="outline" className="px-2 py-1 flex items-center gap-1">
-                  {getQualityIcon()}
-                  <span className="text-xs">{getQualityText()}</span>
-                </Badge>
-              )}
-            </div>
-          </div>
-        </CardHeader>
         <CardContent className="p-0">
           <div className="relative aspect-video bg-muted overflow-hidden">
-
-
             {/* Video Disabled Overlay */}
             {!isVideoEnabled && (
               <div className="absolute inset-0 bg-muted flex items-center justify-center">
@@ -138,14 +112,18 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
               </div>
             )}
 
-            {/* Audio Muted Indicator */}
-            {!isAudioEnabled && (
-              <div className="absolute bottom-2 right-2">
-                <Badge variant="destructive" className="px-2 py-1">
-                  <MicOff className="w-3 h-3" />
-                </Badge>
-              </div>
-            )}
+            <div className="absolute bottom-2 right-2 flex items-center justify-center gap-2">
+              <Badge variant="outline" className="px-2 py-1">
+                {
+                  isAudioEnabled ? <Mic className="w-3 h-3" /> : <MicOff className="w-3 h-3" />
+                }
+              </Badge>
+              <Badge variant="outline" className="px-2 py-1">
+                {
+                  isVideoEnabled ? <Video className="w-3 h-3" /> : <VideoOff className="w-3 h-3" />
+                }
+              </Badge>
+            </div>
           </div>
         </CardContent>
       </Card>

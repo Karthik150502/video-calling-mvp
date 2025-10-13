@@ -1,16 +1,14 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Users } from "lucide-react"
 import { useWebRTC } from "@/hooks/use-webrtc"
 import { VideoGrid } from "@/components/video-grid"
 import { ParticipantPanel } from "@/components/participant-panel"
 import CallControls from "@/components/controls"
-import { useHTMLVideoRefs } from "@/hooks/use-VideoRefs"
+import { useHTMLVideoRefs } from "@/hooks/use-videoRefs"
 import { useParams } from "next/navigation";
 import useStore from "@/zustand/stores/store"
-import { useRouter } from "next/navigation"
+import { useRouter } from "next/navigation";
 
 export default function MeetingPage() {
     const [isCallActive, setIsCallActive] = useState(false);
@@ -26,13 +24,11 @@ export default function MeetingPage() {
 
     useEffect(() => {
         const id = params.meetingId ? Array.isArray(params.meetingId) ? params.meetingId[0] : params.meetingId : ""
-
-        console.log({ meetingId: id })
         setCurrentMeetingId(id)
     }, [params])
 
     const localStreamRef = useRef<MediaStream | null>(null);
-    const { localVideoRef, remoteVideoRefs } = useHTMLVideoRefs()
+    const { localVideoRef, remoteVideoRefs } = useHTMLVideoRefs();
 
     const {
         participants,
@@ -49,7 +45,6 @@ export default function MeetingPage() {
         participantCount
     } = useWebRTC({
         onParticipantJoined: (participant) => {
-            console.log("Participant joined:", participant.id)
         },
         onParticipantLeft: (participantId) => {
             console.log("Participant left:", participantId)

@@ -69,6 +69,7 @@ export function useWebRTC({
               type: "ice-candidate",
               candidate: event.candidate,
               targetId: participantId,
+              roomId: currentMeetingId
             }),
           )
         }
@@ -267,6 +268,7 @@ export function useWebRTC({
             type: "offer",
             offer: offer,
             targetId: participantId,
+            roomId: currentMeetingId
           }),
         )
       } catch (error) {
@@ -316,6 +318,7 @@ export function useWebRTC({
             type: "answer",
             answer: answer,
             targetId: fromId,
+            roomId: currentMeetingId
           }),
         )
       } catch (error) {
@@ -323,7 +326,7 @@ export function useWebRTC({
         if (onError) onError(error as Error)
       }
     },
-    [createPeerConnection, onError],
+    [createPeerConnection, onError, currentMeetingId],
   )
 
   const handleAnswer = useCallback(

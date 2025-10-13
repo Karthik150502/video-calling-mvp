@@ -1,6 +1,6 @@
 import { Participant } from '@/types/call'
 import { create } from 'zustand';
-import { PersistStorage, persist, StateStorage, StorageValue } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
 
 export type Participants = Map<string, Participant>;
 
@@ -11,59 +11,6 @@ type Store = {
     deleteParticipant: (participantId: string) => void,
     setParticipants: (payload: Map<string, Participant> | ((prev: Map<string, Participant>) => Map<string, Participant>)) => void,
     setCurrentMeetingId: (payload: string | null) => void,
-}
-
-
-type StoreStateType = {
-    participants: [string, Participant][],
-    currentMeetingId: string
-}
-
-const customStorage: PersistStorage<StoreStateType, void> = {
-    getItem: (name: string) => {
-        const str = localStorage.getItem(name)
-        if (!str) return null
-
-        let parsed
-        try {
-            parsed = JSON.parse(str)
-        } catch (err) {
-            console.error("Error parsing persisted state:", err)
-            return null
-        }
-
-        // ✅ Only rehydrate Map if it exists
-        if (parsed?.state?.participants) {
-            parsed.state.participants = new Map(parsed.state.participants)
-        }
-
-        return parsed
-    },
-
-    setItem: (name: string, value: StorageValue<StoreStateType>) => {
-        if (!value) {
-            console.warn("Skipping persist: value missing");
-            return;
-        }
-
-        const state = value.state ?? value; // Zustand passes { state, version }
-
-        if (!state.participants) {
-            console.warn("Skipping persist: participants missing", value);
-            return;
-        }
-
-        // ✅ Convert Map → Array before saving
-        const cloned = {
-            ...value,
-            state: {
-                ...state,
-                participants: Array.from(state.participants.entries?.() ?? []),
-            },
-        };
-        localStorage.setItem(name, JSON.stringify(cloned));
-    },
-    removeItem: (name: string) => localStorage.removeItem(name),
 }
 
 const useStore = create<Store>()(
@@ -93,7 +40,10 @@ const useStore = create<Store>()(
         }),
         {
             name: `debate-io-current-participants`,
-            storage: customStorage
+            // Only persist `currentMeetingId`, skip `participants`
+            partialize: (state) => ({
+                currentMeetingId: state.currentMeetingId,
+            }),
         },
 
     )
