@@ -58,7 +58,7 @@ export default function CallControls({
 
 
     return (
-        <div className='w-[400px] p-4 flex items-center justify-center gap-4 fixed bottom-4'>
+        <div className='w-[400px] p-4 flex items-center justify-center gap-4'>
             <TooltipWrapper label='Video On/ Off'>
                 <Button
                     variant={isVideoEnabled ? "default" : "secondary"}

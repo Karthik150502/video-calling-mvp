@@ -2,8 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useWebRTC } from "@/hooks/use-webrtc"
-import { VideoGrid } from "@/components/video-grid"
-import { ParticipantPanel } from "@/components/participant-panel"
+import { VideoPlayer } from "@/components/video-player"
 import CallControls from "@/components/controls"
 import { useHTMLVideoRefs } from "@/hooks/use-videoRefs"
 import { useParams } from "next/navigation";
@@ -17,9 +16,9 @@ export default function MeetingPage() {
     const [isAudioEnabled, setIsAudioEnabled] = useState(true)
     const params = useParams();
     const [signalingServerUrl, setSignalingServerUrl] = useState("ws://localhost:3001")
-    const [connectionError, setConnectionError] = useState<string | null>(null)
+    const [connectionError, setConnectionError] = useState<string | null>(null);
     const [isConnecting, setIsConnecting] = useState(false)
-    const [serverStatus, setServerStatus] = useState<"unknown" | "checking" | "online" | "offline">("unknown")
+    const [serverStatus, setServerStatus] = useState<"unknown" | "checking" | "online" | "offline">("unknown");
     const router = useRouter();
 
     useEffect(() => {
@@ -36,7 +35,6 @@ export default function MeetingPage() {
         joinRoom,
         addLocalStream,
         disconnect,
-        clientId,
         checkSignalingServer,
         replaceAudioVideoTrackInPeerConnections,
         toggleAudio,
@@ -44,12 +42,12 @@ export default function MeetingPage() {
         currentMeetingId,
         participantCount
     } = useWebRTC({
-        onParticipantJoined: (participant) => {
+        onParticipantJoined: (_participant) => {
         },
         onParticipantLeft: (participantId) => {
             console.log("Participant left:", participantId)
         },
-        onParticipantStreamUpdate: (participantId, stream) => {
+        onParticipantStreamUpdate: (participantId, _stream) => {
             console.log("Participant stream updated:", participantId)
         },
         onConnectionStateChange: (participantId, state) => {
@@ -61,6 +59,7 @@ export default function MeetingPage() {
             setIsConnecting(false)
         },
     })
+    const minimize = participantCount > 0;
 
     const checkServerStatus = async () => {
         if (!signalingServerUrl) return
@@ -169,48 +168,37 @@ export default function MeetingPage() {
     }, [])
 
     return (
-        <div className="min-h-screen bg-background p-4">
-            <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 xl:grid-cols-4 gap-6 mb-8">
-                    <div className="xl:col-span-3">
-                        <VideoGrid
-                            localStream={localStreamRef.current || undefined}
-                            participants={participants}
-                            isVideoEnabled={isVideoEnabled}
-                            isAudioEnabled={isAudioEnabled}
-                            localVideoRef={localVideoRef}
-                            remoteVideoRefs={remoteVideoRefs}
-                            className="min-h-[400px] max-h-[80vh]"
-                            participantCount={participantCount}
-                        />
-                    </div>
-
-                    <div className="xl:col-span-1">
-                        <ParticipantPanel
-                            participants={participants}
-                            clientId={clientId}
-                            roomId={currentMeetingId}
-                            className="sticky top-4"
-                            participantCount={participantCount}
-                        />
-                    </div>
-                </div>
-
-                <div className="flex justify-center gap-4 mb-8">
-                    <CallControls
+        <div className="w-full min-h-screen bg-background">
+            <div className="h-[calc(100dvh-4rem)] flex items-start justify-center gap-6 p-4">
+                <div className="w-[calc(100dvw-2rem)] lg:w-[calc(100dvw-10rem)] h-full">
+                    <VideoPlayer
+                        localStream={localStreamRef.current || undefined}
+                        participants={participants}
                         isVideoEnabled={isVideoEnabled}
                         isAudioEnabled={isAudioEnabled}
-                        setIsAudioEnabled={setIsAudioEnabled}
-                        setIsVideoEnabled={setIsVideoEnabled}
-                        endCall={endCall}
-                        localStreamRef={localStreamRef}
-                        replaceAudioVideoTrackInPeerConnections={replaceAudioVideoTrackInPeerConnections}
                         localVideoRef={localVideoRef}
                         remoteVideoRefs={remoteVideoRefs}
-                        sendToggleAudio={toggleAudio}
-                        sendToggleVideo={toggleVideo}
+                        className=""
+                        participantCount={participantCount}
+                        minimize={minimize}
                     />
                 </div>
+            </div>
+
+            <div className="w-screen h-16 flex justify-center gap-4 fixed bottom-0">
+                <CallControls
+                    isVideoEnabled={isVideoEnabled}
+                    isAudioEnabled={isAudioEnabled}
+                    setIsAudioEnabled={setIsAudioEnabled}
+                    setIsVideoEnabled={setIsVideoEnabled}
+                    endCall={endCall}
+                    localStreamRef={localStreamRef}
+                    replaceAudioVideoTrackInPeerConnections={replaceAudioVideoTrackInPeerConnections}
+                    localVideoRef={localVideoRef}
+                    remoteVideoRefs={remoteVideoRefs}
+                    sendToggleAudio={toggleAudio}
+                    sendToggleVideo={toggleVideo}
+                />
             </div>
         </div>
     )
