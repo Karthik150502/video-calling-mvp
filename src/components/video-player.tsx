@@ -5,9 +5,8 @@ import { VideoDisplay } from "./video-display"
 import { cn } from "@/lib/utils"
 import { Participant } from "@/types/call"
 
-
 interface VideoGridProps {
-  localStream?: MediaStream
+  localStream?: MediaStream | null
   participants: Map<string, Participant>
   isVideoEnabled: boolean
   isAudioEnabled: boolean
@@ -15,10 +14,11 @@ interface VideoGridProps {
   localVideoRef: RefObject<HTMLVideoElement | null>,
   remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>,
   participantCount: number,
-  minimize?: boolean
+  minimize?: boolean,
+  isFullscreen?: boolean
 }
 
-export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudioEnabled, className, localVideoRef, remoteVideoRefs, participantCount, minimize }: VideoGridProps) {
+export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudioEnabled, className, localVideoRef, remoteVideoRefs, participantCount, minimize, isFullscreen }: VideoGridProps) {
 
   // Set up local video stream
   useEffect(() => {
@@ -37,26 +37,14 @@ export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudio
     })
   }, [participants])
 
-  const totalVideos = participantCount + 1 // +1 for local video
-
-  // Calculate grid layout based on number of participants
-  const getGridLayout = () => {
-    if (totalVideos <= 1) return "grid-cols-1"
-    if (totalVideos <= 2) return "grid-cols-1 md:grid-cols-2"
-    if (totalVideos <= 4) return "grid-cols-2"
-    if (totalVideos <= 6) return "grid-cols-2 md:grid-cols-3"
-    if (totalVideos <= 9) return "grid-cols-3"
-    return "grid-cols-3 md:grid-cols-4"
-  }
-
   // Get video size based on participant count
   const getCols = () => {
     if (participantCount == 1) return "grid grid-cols-1"
-    if (participantCount == 2) return "grid grid-cols-1 md:grid-cols-2"
+    if (participantCount == 2) return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
     if (participantCount > 2) return "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3"
   }
 
-  return <div className={cn("w-full h-full relative gap-4", className, getCols())
+  return <div className={cn("w-full h-full gap-4", className, getCols())
   }>
     <VideoDisplay
       ref={localVideoRef}
@@ -67,6 +55,7 @@ export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudio
       isConnected={true}
       className={cn("min-h-0 aspect-video")}
       minimize={minimize}
+      isFullscreen={isFullscreen}
     />
     {/* Remote Videos */}
     {Array.from(participants.entries()).map(([participantId, participant]) => {
@@ -87,32 +76,9 @@ export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudio
           isAudioEnabled={participant.audioEnabled}
           connectionQuality={isConnected ? "good" : "poor"}
           isConnected={isConnected}
-          className={cn("min-h-0")}
+          className={cn("min-h-0 aspect-video")}
         />
       )
     })}
   </div>
-  // <div className={cn("w-full h-full", className)}>
-  //   <div className={cn("grid gap-4 h-full auto-rows-fr", getGridLayout())}>
-  //     {/* Local Video */}
-  //     <VideoDisplay
-  //       ref={localVideoRef}
-  //       title="You (Local)"
-  //       isLocal={true}
-  //       isVideoEnabled={isVideoEnabled}
-  //       isAudioEnabled={isAudioEnabled}
-  //       isConnected={true}
-  //       className={cn("min-h-0", getVideoSize())}
-  //     />
-
-
-  //   </div>
-
-  //   {/* Participant Count Indicator */}
-  //   {participantCount > 0 && (
-  //     <div className="absolute top-4 right-4 bg-background/80 backdrop-blur-sm rounded-lg px-3 py-2 text-sm font-medium">
-  //       {totalVideos} participant{totalVideos !== 1 ? "s" : ""} in call
-  //     </div>
-  //   )}
-  // </div>
 }

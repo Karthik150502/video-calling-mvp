@@ -4,7 +4,6 @@ import {
     Drawer,
     DrawerClose,
     DrawerContent,
-    DrawerDescription,
     DrawerFooter,
     DrawerHeader,
     DrawerTitle,
@@ -105,7 +104,6 @@ export default function CallSettingsDrawer({
                             selectItemLabel={"Select Video Input"}
                         />
                     </div>
-
                     <DrawerFooter>
                         <DrawerClose asChild>
                         </DrawerClose>
