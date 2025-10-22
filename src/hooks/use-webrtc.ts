@@ -3,6 +3,7 @@
 import { Participant } from "@/types/call"
 import useStore from "@/zustand/stores/store"
 import { useRef, useCallback, useState } from "react"
+import { useAddtionalCallSettings } from "./use-settings"
 
 interface WebRTCMessage {
   type: string
@@ -33,6 +34,7 @@ export function useWebRTC({
   const wsRef = useRef<WebSocket | null>(null)
   const clientIdRef = useRef<string | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { toggleFullscreen } = useAddtionalCallSettings()
 
   const iceServers = [
     { urls: "stun:stun.l.google.com:19302" },
@@ -399,7 +401,7 @@ export function useWebRTC({
     }
   }, [])
 
-  const toggleAudio = useCallback((value: boolean) => {
+  const sendToggleAudio = useCallback((value: boolean) => {
     if (wsRef.current) {
       wsRef.current.send(
         JSON.stringify({
@@ -410,7 +412,7 @@ export function useWebRTC({
       )
     }
   }, [currentMeetingId])
-  const toggleVideo = useCallback((value: boolean) => {
+  const sendToggleVideo = useCallback((value: boolean) => {
     if (wsRef.current) {
       wsRef.current.send(
         JSON.stringify({
@@ -446,6 +448,9 @@ export function useWebRTC({
     setParticipants(new Map())
     setCurrentMeetingId(null);
     clientIdRef.current = null
+    if (document.fullscreenElement) {
+      toggleFullscreen();
+    }
   }, [])
 
 
@@ -645,8 +650,8 @@ export function useWebRTC({
     checkSignalingServer, // Exposed helper function
     replaceAudioVideoTrackInPeerConnections,
     updatePeerConnections,
-    toggleAudio,
-    toggleVideo,
+    sendToggleAudio,
+    sendToggleVideo,
     currentMeetingId,
     participantCount
   }

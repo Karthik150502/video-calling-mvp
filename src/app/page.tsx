@@ -19,7 +19,6 @@ export default function VideoCallPage() {
   const [useLocalMode, setUseLocalMode] = useState(false);
   const router = useRouter();
 
-
   const {
     checkSignalingServer
   } = useWebRTC({
@@ -168,7 +167,11 @@ export default function VideoCallPage() {
         <div className="flex justify-center gap-4 mb-8">
           <Button
             onClick={async () => {
-              router.push(`/meeting/${roomId}`);
+              if (useLocalMode) {
+                
+              } else {
+                router.push(`/meeting/${roomId}`);
+              }
             }}
             size="lg"
             className="px-8"
