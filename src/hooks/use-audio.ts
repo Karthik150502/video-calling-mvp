@@ -25,6 +25,7 @@ export function useAudioSettings({
     const [activeAudioOutput, setActiveAudioOutput] = useState<string | undefined>(undefined);
     const [availableAudioInputs, setAvailableAudioInputs] = useState<DeviceType[]>([]);
     const [availableAudioOutputs, setAvailableAudioOutputs] = useState<DeviceType[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
 
     const switchAudioOutput = useCallback(async (deviceId?: string) => {
@@ -117,29 +118,36 @@ export function useAudioSettings({
     }, [isAudioEnabled, localStreamRef, replaceAudioVideoTrackInPeerConnections])
 
     const enumerateDevices = useCallback(async () => {
-        const enumeratedDevices = await navigator.mediaDevices.enumerateDevices()
-        const inputs: DeviceType[] = [];
-        const outputs: DeviceType[] = [];
-        for (let i = 0; i < enumeratedDevices.length; i++) {
-            const device = enumeratedDevices[i];
-            if (device.kind === "audioinput") {
-                inputs.push({
-                    label: device.label,
-                    value: device.deviceId
-                })
+        try {
+            setIsLoading(true)
+            const enumeratedDevices = await navigator.mediaDevices.enumerateDevices()
+            const inputs: DeviceType[] = [];
+            const outputs: DeviceType[] = [];
+            for (let i = 0; i < enumeratedDevices.length; i++) {
+                const device = enumeratedDevices[i];
+                if (device.kind === "audioinput") {
+                    inputs.push({
+                        label: device.label,
+                        value: device.deviceId
+                    })
+                }
+                if (device.kind === "audiooutput") {
+                    outputs.push({
+                        label: device.label,
+                        value: device.deviceId
+                    })
+                }
             }
-            if (device.kind === "audiooutput") {
-                outputs.push({
-                    label: device.label,
-                    value: device.deviceId
-                })
-            }
-        }
-        setAvailableAudioInputs(inputs);
-        setAvailableAudioOutputs(outputs);
+            setAvailableAudioInputs(inputs);
+            setAvailableAudioOutputs(outputs);
 
-        // Activate the "communications" devices
-        await switchAudioOutput();
+            // Activate the "communications" devices
+            await switchAudioOutput();
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setIsLoading(false)
+        }
 
     }, [switchAudioOutput])
 
@@ -175,7 +183,8 @@ export function useAudioSettings({
         availableAudioInputs,
         availableAudioOutputs,
         switchAudioInput,
-        switchAudioOutput
+        switchAudioOutput,
+        isLoading
     }
 
 }

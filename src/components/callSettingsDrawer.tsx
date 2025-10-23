@@ -22,7 +22,7 @@ type CallSettingsProps = {
     replaceAudioVideoTrackInPeerConnections: (newTrack: MediaStreamTrack) => Promise<void>,
     localVideoRef: RefObject<HTMLVideoElement | null>,
     remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>
-    drawerTrigger: React.ReactNode,
+    triggerElement: React.ReactNode,
 }
 
 export default function CallSettingsDrawer({
@@ -32,7 +32,7 @@ export default function CallSettingsDrawer({
     replaceAudioVideoTrackInPeerConnections,
     localVideoRef,
     remoteVideoRefs,
-    drawerTrigger
+    triggerElement
 }: CallSettingsProps) {
 
 
@@ -42,7 +42,8 @@ export default function CallSettingsDrawer({
         availableAudioInputs,
         activeAudioOutput,
         switchAudioInput,
-        switchAudioOutput
+        switchAudioOutput,
+        isLoading: isAudioLoading
     } = useAudioSettings({
         isAudioEnabled,
         localStreamRef,
@@ -55,6 +56,7 @@ export default function CallSettingsDrawer({
         activeVideoInput,
         availableVideoInputs,
         switchVideoInput,
+        isLoading: isVideoLoading
     } = useVideoSettings({
         isVideoEnabled,
         localStreamRef,
@@ -63,15 +65,16 @@ export default function CallSettingsDrawer({
 
     return (
         <Drawer>
-            <TooltipWrapper label='More Settings'>
-                <DrawerTrigger asChild>
-                    {drawerTrigger}
-                </DrawerTrigger>
-            </TooltipWrapper>
+            <TooltipWrapper
+                label='More Settings'
+                element={<DrawerTrigger asChild>
+                    {triggerElement}
+                </DrawerTrigger>}
+            />
             <DrawerContent className='w-full'>
                 <div className="mx-auto w-full md:w-5xl flex flex-col gap-4 items-center justify-center px-4">
                     <DrawerHeader className='w-full'>
-                        <DrawerTitle>Audio Settings</DrawerTitle>
+                        <DrawerTitle>More Settings</DrawerTitle>
                     </DrawerHeader>
                     <div className='w-full flex flex-col items-center justify-center gap-2'>
                         <CallSettingsItem
@@ -82,6 +85,7 @@ export default function CallSettingsDrawer({
                             emptyCommandLabel={"No Audio Device found."}
                             searchInputLabel={"Select Audio Input"}
                             selectItemLabel={"Select Audio Input"}
+                            isLoading={isAudioLoading}
                         />
                         <Separator />
                         <CallSettingsItem
@@ -92,6 +96,7 @@ export default function CallSettingsDrawer({
                             emptyCommandLabel={"No Audio Device found."}
                             searchInputLabel={"Select Audio Ouput"}
                             selectItemLabel={"Select Audio Ouput"}
+                            isLoading={isAudioLoading}
                         />
                         <Separator />
                         <CallSettingsItem
@@ -102,6 +107,7 @@ export default function CallSettingsDrawer({
                             emptyCommandLabel={"No Video Device found."}
                             searchInputLabel={"Select Video Input"}
                             selectItemLabel={"Select Video Input"}
+                            isLoading={isVideoLoading}
                         />
                     </div>
                     <DrawerFooter>

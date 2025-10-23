@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Phone, Settings, AlertCircle, CheckCircle } from "lucide-react"
 import { useWebRTC } from "@/hooks/use-webrtc"
 import { useRouter } from "next/navigation"
+import ErrorBanner from "@/components/errorBanner"
 
 export default function VideoCallPage() {
   const [roomId, setRoomId] = useState("")
@@ -77,27 +78,20 @@ export default function VideoCallPage() {
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-7xl mx-auto">
 
-        {connectionError && (
-          <Card className="mb-6 max-w-2xl mx-auto border-destructive">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-destructive mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-semibold text-destructive mb-1">Connection Failed</h4>
-                  <p className="text-sm text-muted-foreground mb-3">{connectionError}</p>
-                  <div className="text-xs text-muted-foreground">
-                    <p>• Make sure the signaling server is running on {signalingServerUrl}</p>
-                    <p>
-                      • Run: <code className="bg-muted px-1 rounded">cd server && npm install && npm start</code>
-                    </p>
-                    <p>• Check that the WebSocket URL is correct</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
+        {
+          connectionError && <ErrorBanner
+            heading={"Connection Failed"}
+            title={connectionError}
+            description={<div className="w-full h-full">
+              <p>• Make sure the signaling server is running on {signalingServerUrl}</p>
+              <p>
+                • Run: <code className="bg-muted px-1 rounded">cd server && npm install && npm start</code>
+              </p>
+              <p>• Check that the WebSocket URL is correct</p>
+            </div>}
+          />
+        }
         <Card className="mb-8 max-w-md mx-auto">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -163,12 +157,11 @@ export default function VideoCallPage() {
             )}
           </CardContent>
         </Card>
-
         <div className="flex justify-center gap-4 mb-8">
           <Button
             onClick={async () => {
               if (useLocalMode) {
-                
+
               } else {
                 router.push(`/meeting/${roomId}`);
               }
@@ -181,45 +174,6 @@ export default function VideoCallPage() {
             {isConnecting ? "Connecting..." : useLocalMode ? "Start Local Test" : "Join Call"}
           </Button>
         </div>
-
-        <Card className="max-w-3xl mx-auto">
-          <CardHeader>
-            <CardTitle>How to Use Multi-Peer Video Calling</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-semibold mb-2">Setup Steps:</h4>
-                <ol className="space-y-1 text-sm">
-                  <li>1. Start the signaling server</li>
-                  <li>2. Enter a room ID (optional)</li>
-                  <li>3. Click (Join Call)</li>
-                  <li>4. Share room ID with multiple participants</li>
-                  <li>5. Each participant joins the same room</li>
-                </ol>
-              </div>
-              <div>
-                <h4 className="font-semibold mb-2">Features:</h4>
-                <ul className="space-y-1 text-sm">
-                  <li>• Support for 2+ participants</li>
-                  <li>• Automatic video grid layout</li>
-                  <li>• Participant management panel</li>
-                  <li>• Real-time connection status</li>
-                  <li>• HD video quality (720p)</li>
-                  <li>• Echo cancellation</li>
-                  <li>• Room ID sharing</li>
-                </ul>
-              </div>
-            </div>
-            <div className="pt-4 border-t">
-              <p className="text-sm text-muted-foreground">
-                <strong>Server Setup:</strong> Run{" "}
-                <code className="bg-muted px-1 rounded">cd server && npm install && npm start</code> to start the
-                signaling server on port 3001. Multiple participants can join the same room for group video calls.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { montserrat400 } from "@/fonts/montserrat400";
+import { manrope400 } from "@/fonts/manrope400";
 
 export const metadata: Metadata = {
   title: "Debate MVP",
@@ -15,7 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${montserrat400.className} min-h-screen relative antialiased`}
+        className={`${manrope400.className} min-h-screen relative antialiased`}
       >
         {children}
       </body>
