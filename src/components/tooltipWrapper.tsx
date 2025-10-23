@@ -1,7 +1,5 @@
 import React from 'react'
 
-
-import { Button } from "@/components/ui/button"
 import {
     Tooltip,
     TooltipContent,
@@ -10,17 +8,17 @@ import {
 
 export default function TooltipWrapper({
     label,
-    children
+    element
 }: {
-    children: React.ReactNode,
+    element: React.ReactNode,
     label: string
 }) {
     return <Tooltip>
         <TooltipTrigger asChild>
-            {children}
+            {element}
         </TooltipTrigger>
         <TooltipContent>
-            <p className='text-sm whitespace-nowrap'>
+            <p className='text-xs whitespace-nowrap'>
                 {label}
             </p>
         </TooltipContent>

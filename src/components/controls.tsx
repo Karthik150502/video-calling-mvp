@@ -1,7 +1,7 @@
 "use client";
 import React, { RefObject } from 'react'
 import { Button } from './ui/button'
-import { Mic, MicOff, PhoneOff, Settings, Video, VideoOff } from 'lucide-react'
+import { Ellipsis, LucideUsersRound, Mic, MicOff, PhoneOff, Settings, Video, VideoOff } from 'lucide-react'
 import CallSettingsDrawer from './callSettingsDrawer';
 import TooltipWrapper from './tooltipWrapper';
 import AdditionalCallSettings from './addtionalCallSettings';
@@ -72,36 +72,30 @@ export default function CallControls({
 
     return <div className={cn("w-screen h-16 flex justify-center gap-4 fixed bottom-0 transition-transform duration-300",
         isFullscreen && "translate-y-16",
-        showControls && "translate-y-0")}>
+        showControls && "translate-y-0",
+        "border border-black/20 rounded-full w-[90dvw] overflow-x-scroll no-scrollbar overflow-y-hidden flex items-center justify-start sm:border-none sm:w-fit sm:overflow-hidden")}>
         <div className={"w-[400px] p-4 flex items-center justify-center gap-4"}>
-            <TooltipWrapper label='Video On/ Off'>
-                <Button
+            <TooltipWrapper
+                label='Video On/ Off'
+                element={<Button
                     variant={isVideoEnabled ? "default" : "secondary"}
                     onClick={toggleVideo}
                     size={"icon"}
                     className="rounded-full"
                 >
                     {isVideoEnabled ? <Video /> : <VideoOff />}
-                </Button>
-            </TooltipWrapper>
-            <TooltipWrapper label='Mic On/ Off'>
-                <Button
+                </Button>}
+            />
+            <TooltipWrapper
+                label='Mic On/ Off'
+                element={<Button
                     variant={isAudioEnabled ? "default" : "secondary"}
                     onClick={toggleAudio}
                     size={"icon"}
                     className="rounded-full"
                 >
                     {isAudioEnabled ? <Mic /> : <MicOff />}
-                </Button>
-            </TooltipWrapper>
-            <CallSettingsDrawer
-                isVideoEnabled={isVideoEnabled}
-                isAudioEnabled={isAudioEnabled}
-                localStreamRef={localStreamRef}
-                replaceAudioVideoTrackInPeerConnections={replaceAudioVideoTrackInPeerConnections}
-                localVideoRef={localVideoRef}
-                remoteVideoRefs={remoteVideoRefs}
-                drawerTrigger={<Button size="icon" className='rounded-full'><Settings /></Button>}
+                </Button>}
             />
             <Button
                 variant="destructive"
@@ -111,15 +105,37 @@ export default function CallControls({
                 <PhoneOff />
                 End Call
             </Button>
+            <CallSettingsDrawer
+                isVideoEnabled={isVideoEnabled}
+                isAudioEnabled={isAudioEnabled}
+                localStreamRef={localStreamRef}
+                replaceAudioVideoTrackInPeerConnections={replaceAudioVideoTrackInPeerConnections}
+                localVideoRef={localVideoRef}
+                remoteVideoRefs={remoteVideoRefs}
+                triggerElement={<Button size="icon" className='rounded-full'>
+                    <Settings />
+                </Button>}
+            />
             <ParticipantsTab
                 participants={participants}
                 participantCount={participantCount}
+                triggerElement={<Button
+                    size={"icon"}
+                    className="rounded-full">
+                    <LucideUsersRound />
+                </Button>}
             />
             <AdditionalCallSettings
                 label='More Settings'
                 isFullscreen={isFullscreen}
                 toggleFullscreen={toggleFullscreen}
+                triggerElement={<Button
+                    variant="default"
+                    size={"icon"}
+                    className="rounded-full">
+                    <Ellipsis />
+                </Button>}
             />
         </div>
-    </div>
+    </div >
 }

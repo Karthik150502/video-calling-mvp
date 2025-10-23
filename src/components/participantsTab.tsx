@@ -7,39 +7,31 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { ScrollArea } from '@radix-ui/react-scroll-area'
-import { Button } from './ui/button'
-import { LucideUsersRound } from 'lucide-react'
+import TooltipWrapper from './tooltipWrapper'
 
 type ParticipantPanelProps = {
     participants: Map<string, Participant>
     className?: string,
-    participantCount: number
+    participantCount: number,
+    triggerElement: React.ReactNode
 }
 
 export default function ParticipantsTab({
     participants,
     participantCount,
-    className
+    className,
+    triggerElement
 }: ParticipantPanelProps) {
     return <Popover>
-        <PopoverTrigger asChild>
-            <Button
-                size={"icon"}
-                className="rounded-full">
-                <LucideUsersRound />
-            </Button>
-        </PopoverTrigger>
+        <TooltipWrapper
+            label='Participants'
+            element={<PopoverTrigger asChild>
+                {triggerElement}
+            </PopoverTrigger>}
+        />
         <PopoverContent className="w-80">
-            <h1>{participantCount}</h1>
-            <div className={cn("w-full min-h-[300px] flex-col items-center justify-center", className)}>
+            <div className={cn("min-h-[250px] md:w-fit w-[90dvw] flex-col items-center justify-center", className)}>
                 <ScrollArea className="w-full h-full rounded-md border">
-                    {
-                        Array.from(participants.entries()).map(([id, participant]) => {
-                            return <div key={id} className='w-full'>
-                                {participant.id}&nbsp;{participant.connectionState}
-                            </div>
-                        })
-                    }
                 </ScrollArea>
             </div>
         </PopoverContent>

@@ -18,6 +18,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
+import { Spinner } from "./ui/spinner"
 
 
 export function SettingsCombobox({
@@ -26,14 +27,16 @@ export function SettingsCombobox({
     onSelect,
     emptyCommandLabel,
     searchInputLabel,
-    selectItemLabel
+    selectItemLabel,
+    isLoading
 }: {
     activeItem: string | undefined
     items: { value: string, label: string }[],
     onSelect: (deviceId: string) => void,
     emptyCommandLabel: string,
     searchInputLabel: string,
-    selectItemLabel: string
+    selectItemLabel: string,
+    isLoading?: boolean
 }) {
     const [open, setOpen] = React.useState(false)
 
@@ -44,11 +47,13 @@ export function SettingsCombobox({
                     variant="outline"
                     role="combobox"
                     aria-expanded={open}
-                    className="w-fit h-fit shadow-none text-xs md:text-sm justify-between text-wrap whitespace-normal"
+                    className="w-fit h-fit shadow-none flex items-center justify-between text-xs md:text-sm text-wrap whitespace-normal"
                 >
-                    {activeItem
-                        ? items.find((item) => item.value === activeItem)?.label
-                        : selectItemLabel}
+                    {
+                        isLoading ? <Spinner /> : activeItem
+                            ? items.find((item) => item.value === activeItem)?.label
+                            : selectItemLabel
+                    }
                     <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
             </PopoverTrigger>

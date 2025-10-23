@@ -11,28 +11,29 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Button } from './ui/button';
 import { Ellipsis } from 'lucide-react';
+import TooltipWrapper from './tooltipWrapper';
 type CallSettingsProps = {
     label: string,
     isFullscreen?: boolean,
-    toggleFullscreen: () => void
+    toggleFullscreen: () => void,
+    triggerElement: React.ReactNode
 }
 
 export default function AdditionalCallSettings({
     label,
     toggleFullscreen,
     isFullscreen,
+    triggerElement
 }: CallSettingsProps) {
 
     return (
         <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button
-                    variant="default"
-                    size={"icon"}
-                    className="rounded-full">
-                    <Ellipsis />
-                </Button>
-            </DropdownMenuTrigger>
+            <TooltipWrapper
+                label='Additional Settings'
+                element={<DropdownMenuTrigger asChild>
+                    {triggerElement}
+                </DropdownMenuTrigger>}
+            />
             <DropdownMenuPortal>
                 <DropdownMenuContent className="w-56" align="start">
                     <DropdownMenuLabel>{label}</DropdownMenuLabel>

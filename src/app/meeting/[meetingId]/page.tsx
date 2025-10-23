@@ -203,7 +203,7 @@ export default function MeetingPage() {
 
     return (
         <div className="w-full min-h-screen bg-background relative">
-            <div className={cn("py-2 h-[calc(100dvh-4rem)] w-[calc(100dvw-2rem)] absolute right-0 left-0 m-auto", isFullscreen && "py-0 min-h-screen lg:w-full")}>
+            <div className={cn("py-2 h-[calc(100dvh-4rem)] w-[calc(100dvw-2rem)] absolute right-0 left-0 m-auto", isFullscreen && "py-0 min-h-screen w-full")}>
                 <VideoPlayer
                     localStream={localStreamRef.current}
                     participants={participants}

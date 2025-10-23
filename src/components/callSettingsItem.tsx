@@ -8,7 +8,8 @@ export default function CallSettingsItem({
     label,
     emptyCommandLabel,
     searchInputLabel,
-    selectItemLabel
+    selectItemLabel,
+    isLoading
 }: {
     activeItem: string | undefined
     items: { value: string, label: string }[],
@@ -16,7 +17,8 @@ export default function CallSettingsItem({
     label: string,
     emptyCommandLabel: string,
     searchInputLabel: string,
-    selectItemLabel: string
+    selectItemLabel: string,
+    isLoading?: boolean
 }) {
     return <div className='w-full flex flex-col md:flex-row items-start md:items-center justify-center md:justify-between md:gap-6 gap-2'>
         <p className='text-xs md:text-sm whitespace-nowrap'>{label}</p>
@@ -27,6 +29,7 @@ export default function CallSettingsItem({
             emptyCommandLabel={emptyCommandLabel}
             searchInputLabel={searchInputLabel}
             selectItemLabel={selectItemLabel}
+            isLoading={isLoading}
         />
     </div>
 }

@@ -19,6 +19,7 @@ export function useVideoSettings({
 
     const [activeVideoInput, setActiveVideoInput] = useState<string | undefined>(undefined);
     const [availableVideoInputs, setAvailableVideoInputs] = useState<DeviceType[]>([]);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
 
 
     const switchVideoInput = useCallback(async (deviceId: string) => {
@@ -98,30 +99,35 @@ export function useVideoSettings({
     }, [isVideoEnabled, localStreamRef, replaceAudioVideoTrackInPeerConnections])
 
     const enumerateDevices = useCallback(async () => {
-        const enumeratedDevices = await navigator.mediaDevices.enumerateDevices()
-        console.log({
-            enumeratedDevices
-        })
-        const inputs: DeviceType[] = [];
-        const outputs: DeviceType[] = [];
-        for (let i = 0; i < enumeratedDevices.length; i++) {
-            const device = enumeratedDevices[i];
-            if (device.kind === "videoinput") {
-                inputs.push({
-                    label: device.label,
-                    value: device.deviceId
-                })
+        try {
+            setIsLoading(true);
+            const enumeratedDevices = await navigator.mediaDevices.enumerateDevices()
+            console.log({
+                enumeratedDevices
+            })
+            const inputs: DeviceType[] = [];
+            const outputs: DeviceType[] = [];
+            for (let i = 0; i < enumeratedDevices.length; i++) {
+                const device = enumeratedDevices[i];
+                if (device.kind === "videoinput") {
+                    inputs.push({
+                        label: device.label,
+                        value: device.deviceId
+                    })
+                }
+                if (device.kind === "videoinput") {
+                    outputs.push({
+                        label: device.label,
+                        value: device.deviceId
+                    })
+                }
             }
-            if (device.kind === "videoinput") {
-                outputs.push({
-                    label: device.label,
-                    value: device.deviceId
-                })
-            }
+            setAvailableVideoInputs(inputs);
+        } catch (e) {
+            console.error(e)
+        } finally {
+            setIsLoading(false);
         }
-        setAvailableVideoInputs(inputs);
-
-
     }, [])
 
 
@@ -156,6 +162,7 @@ export function useVideoSettings({
         activeVideoInput,
         availableVideoInputs,
         switchVideoInput,
+        isLoading
     }
 
 }
