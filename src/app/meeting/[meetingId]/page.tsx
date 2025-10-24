@@ -10,8 +10,6 @@ import useStore from "@/zustand/stores/store"
 import { useRouter } from "next/navigation";
 import { useAddtionalCallSettings } from "@/hooks/use-settings"
 import { cn } from "@/lib/utils"
-import { useAudioSettings } from "@/hooks/use-audio"
-import { useVideoSettings } from "@/hooks/use-video"
 
 export default function MeetingPage() {
     const [isCallActive, setIsCallActive] = useState(false);
