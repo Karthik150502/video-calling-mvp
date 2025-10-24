@@ -8,6 +8,8 @@ import { useHTMLVideoRefs } from "@/hooks/use-videoRefs"
 import { useParams } from "next/navigation";
 import useStore from "@/zustand/stores/store"
 import { useRouter } from "next/navigation";
+import { useAddtionalCallSettings } from "@/hooks/use-settings"
+import { cn } from "@/lib/utils"
 
 export default function MeetingPage() {
     const [isCallActive, setIsCallActive] = useState(false);
@@ -28,6 +30,37 @@ export default function MeetingPage() {
 
     const localStreamRef = useRef<MediaStream | null>(null);
     const { localVideoRef, remoteVideoRefs } = useHTMLVideoRefs();
+    const { toggleFullscreen, isFullscreen } = useAddtionalCallSettings();
+
+    const [showControls, setShowControls] = useState<boolean>(isFullscreen ?? false);
+    const timerRef = useRef<NodeJS.Timeout | null>(null);
+    useEffect(() => {
+        let timer = timerRef.current;
+        if (showControls) {
+            if (timer) {
+                clearTimeout(timer);
+            }
+            timer = setTimeout(() => {
+                setShowControls(false)
+            }, 5000)
+        }
+
+        return () => {
+            if (timer) {
+                clearTimeout(timer)
+            }
+        }
+    }, [showControls])
+
+    const handleMoudeMove = () => {
+        setShowControls(true)
+    }
+    useEffect(() => {
+        window.addEventListener("mouseover", handleMoudeMove);
+        return () => {
+            window.removeEventListener("mouseover", handleMoudeMove);
+        }
+    }, [])
 
     const {
         participants,
@@ -37,8 +70,8 @@ export default function MeetingPage() {
         disconnect,
         checkSignalingServer,
         replaceAudioVideoTrackInPeerConnections,
-        toggleAudio,
-        toggleVideo,
+        sendToggleAudio,
+        sendToggleVideo,
         currentMeetingId,
         participantCount
     } = useWebRTC({
@@ -145,7 +178,6 @@ export default function MeetingPage() {
     }
 
     const endCall = () => {
-        // disconnectCall();
         router.push("/");
         setIsCallActive(false)
         setConnectionError(null)
@@ -168,21 +200,19 @@ export default function MeetingPage() {
     }, [])
 
     return (
-        <div className="w-full min-h-screen bg-background">
-            <div className="h-[calc(100dvh-4rem)] flex items-start justify-center gap-6 p-4">
-                <div className="w-[calc(100dvw-2rem)] lg:w-[calc(100dvw-10rem)] h-full">
-                    <VideoPlayer
-                        localStream={localStreamRef.current || undefined}
-                        participants={participants}
-                        isVideoEnabled={isVideoEnabled}
-                        isAudioEnabled={isAudioEnabled}
-                        localVideoRef={localVideoRef}
-                        remoteVideoRefs={remoteVideoRefs}
-                        className=""
-                        participantCount={participantCount}
-                        minimize={minimize}
-                    />
-                </div>
+        <div className="w-full min-h-screen bg-background relative">
+            <div className={cn("py-2 h-[calc(100dvh-4rem)] w-[calc(100dvw-2rem)] absolute right-0 left-0 m-auto", isFullscreen && "py-0 min-h-screen w-full")}>
+                <VideoPlayer
+                    localStream={localStreamRef.current}
+                    participants={participants}
+                    isVideoEnabled={isVideoEnabled}
+                    isAudioEnabled={isAudioEnabled}
+                    localVideoRef={localVideoRef}
+                    remoteVideoRefs={remoteVideoRefs}
+                    participantCount={participantCount}
+                    minimize={minimize}
+                    isFullscreen={isFullscreen}
+                />
             </div>
 
             <div className="w-screen h-16 flex justify-center gap-4 fixed bottom-0">
@@ -196,8 +226,13 @@ export default function MeetingPage() {
                     replaceAudioVideoTrackInPeerConnections={replaceAudioVideoTrackInPeerConnections}
                     localVideoRef={localVideoRef}
                     remoteVideoRefs={remoteVideoRefs}
-                    sendToggleAudio={toggleAudio}
-                    sendToggleVideo={toggleVideo}
+                    sendToggleAudio={sendToggleAudio}
+                    sendToggleVideo={sendToggleVideo}
+                    participantCount={participantCount}
+                    participants={participants}
+                    showControls={showControls}
+                    isFullscreen={isFullscreen}
+                    toggleFullscreen={toggleFullscreen}
                 />
             </div>
         </div>

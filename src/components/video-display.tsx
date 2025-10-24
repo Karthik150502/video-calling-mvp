@@ -1,9 +1,10 @@
 "use client"
 
-import { forwardRef, useEffect, useState } from "react"
+import { forwardRef, useCallback, useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Video, VideoOff, Mic, MicOff, Signal, SignalHigh, SignalLow, SignalMedium } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useWebRTC } from "@/hooks/use-webrtc"
 
 interface VideoDisplayProps {
   title: string
@@ -13,15 +14,17 @@ interface VideoDisplayProps {
   connectionQuality?: "poor" | "fair" | "good" | "excellent"
   isConnected?: boolean
   className?: string,
-  minimize?: boolean
+  minimize?: boolean,
+  isFullscreen?: boolean
 }
 
 const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
   (
-    { title, isLocal = false, isVideoEnabled = true, isAudioEnabled = true, connectionQuality, isConnected, className, minimize },
+    { title, isLocal = false, isVideoEnabled = true, isAudioEnabled = true, connectionQuality, isConnected, className, minimize, isFullscreen },
     ref,
   ) => {
-    const [isVideoLoaded, setIsVideoLoaded] = useState(false)
+    const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+    const { participantCount } = useWebRTC();
 
     const getQualityIcon = () => {
       switch (connectionQuality) {
@@ -53,9 +56,23 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
       }
     }
 
+    const getAdditionalStyles = useCallback(() => {
+      if (minimize) {
+        return "z-50 transition-all duration-500 absolute md:w-[325px] md:h-[175px] bottom-0 right-0 w-[220px] h-[120px]"
+      }
+      else if (participantCount > 1) {
+        return "aspect-video"
+      }
+      else if (isFullscreen && isLocal) {
+        return "w-full h-full rounded-none"
+      }
+      else {
+        return "w-full h-full"
+      }
+    }, [minimize, participantCount, isFullscreen, isLocal])
+
     return (
-      <div className={cn("relative bg-muted overflow-hidden rounded-2xl", minimize ? "z-50 transition-all duration-500 absolute md:w-[325px] md:h-[175px] bottom-0 right-0 w-[220px] h-[120px]" : "h-full w-full"
-      )}>
+      <div className={cn("relative bg-muted overflow-hidden rounded-2xl", getAdditionalStyles())}>
         {/* Video Disabled Overlay */}
         {!isVideoEnabled && (
           <div className="absolute inset-0 bg-muted flex items-center justify-center">
@@ -111,7 +128,7 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
           </div>
         )}
 
-        <div className="absolute bottom-2 right-2 flex items-center justify-center gap-2">
+        <div className="absolute top-2 right-2 flex items-center justify-center gap-2">
           <Badge variant="outline" className="px-2 py-1">
             {
               isAudioEnabled ? <Mic className="w-3 h-3" /> : <MicOff className="w-3 h-3" />
