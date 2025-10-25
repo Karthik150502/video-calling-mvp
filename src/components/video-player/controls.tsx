@@ -1,12 +1,12 @@
 "use client";
 import React, { RefObject } from 'react'
-import { Button } from './ui/button'
+import { Button } from '../ui/button'
 import { Ellipsis, LucideUsersRound, Mic, MicOff, PhoneOff, Settings, Video, VideoOff } from 'lucide-react'
 import CallSettingsDrawer from './callSettingsDrawer';
-import TooltipWrapper from './tooltipWrapper';
+import TooltipWrapper from '../tooltipWrapper';
 import AdditionalCallSettings from './addtionalCallSettings';
 import { Participant } from '@/types/call';
-import ParticipantsTab from './participantsTab';
+import ParticipantsTab from '../participantsTab';
 import { cn } from '@/lib/utils';
 
 type ControlsProps = {

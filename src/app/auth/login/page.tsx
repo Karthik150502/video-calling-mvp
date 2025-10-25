@@ -1,4 +1,4 @@
-import LoginComponents from '@/components/auth/login/loginComponents';
+import LoginComponents from '@/components/auth/loginComponents';
 import { Metadata } from 'next';
 import React from 'react';
 

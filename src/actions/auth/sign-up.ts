@@ -9,12 +9,16 @@ export async function signUp(values: SignUpType) {
             email: values.email,
             password: values.password,
             options: {
+                emailRedirectTo: "http://localhost:3000/auth/v1/callback",
                 data: {
                     firstName: values.firstName,
                     lastName: values.lastName
                 }
             }
         })
+        if (result.error) {
+            return { user: null, error: result.error.message }
+        }
         return { user: result.data.user, error: null }
     } catch (error) {
         if (error instanceof AuthError) {
