@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/bate/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -11,8 +11,8 @@ import { useWebRTC } from "@/hooks/use-webrtc"
 import { useRouter } from "next/navigation"
 import ErrorBanner from "@/components/errorBanner"
 import { UserProfile } from "@/packages/supabase/types"
-import { getSession } from "@/actions/getSession"
-import LogoutButton from "@/components/logoutButton"
+import { getSession } from "@/actions/auth/getSession"
+import LogoutButton from "@/components/auth/logoutButton"
 
 export default function HomePage() {
   const [roomId, setRoomId] = useState("")
@@ -29,15 +29,17 @@ export default function HomePage() {
   useEffect(() => {
     getSession().then(({ session }) => {
       if (session) {
-        setUser(() => {
-          return {
-            id: session.user.id,
-            email: session.user.email,
-            firstName: session.user.user_metadata.firstName,
-            lastName: session.user.user_metadata.lastName,
-            emailVerified: session.user.user_metadata.email_verified,
-          }
+        const userData = {
+          id: session.user.id,
+          email: session.user.email,
+          firstName: session.user.user_metadata.firstName,
+          lastName: session.user.user_metadata.lastName,
+          emailVerified: session.user.user_metadata.email_verified,
+        }
+        console.log({
+          userData
         })
+        setUser(userData)
       }
     })
   }, [])
@@ -188,11 +190,9 @@ export default function HomePage() {
                 router.push(`/meeting/${roomId}`);
               }
             }}
-            size="lg"
-            className="px-8"
             disabled={isConnecting || (!useLocalMode && serverStatus === "offline")}
           >
-            <Phone className="w-5 h-5 mr-2" />
+            <Phone />
             {isConnecting ? "Connecting..." : useLocalMode ? "Start Local Test" : "Join Call"}
           </Button>
           <LogoutButton />

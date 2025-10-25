@@ -9,9 +9,9 @@ export function FormSuccess({ message }: FormSuccessProps) {
     return (
         <div className='bg-emerald-500/15 dark:bg-emerald-500/30 p-3 rounded-md flex items-center space-x-2 text-xs md:text-sm text-emerald-500 dark:text-emerald-300'>
             <div className='w-4 h-4'>
-                <CheckCircle className='h-4 w-4' />
+                <CheckCircle className='font-bold h-4 w-4' />
             </div>
-            <p>{message}</p>
+            <p className="text-xs font-bold">{message}</p>
         </div>
     );
 }

@@ -1,5 +1,4 @@
 "use client";
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card'
 import React from 'react'
 import LoginForm from './loginForm';
@@ -22,12 +21,7 @@ export default function LoginComponent({ scrollToSignUp }: LoginComponentProps) 
 
         </CardDescription>
         <CardFooter>
-            <Button
-                variant={"link"}
-                size={"sm"}
-                onClick={scrollToSignUp}>
-                Sign Up
-            </Button>
+            <p className='text-xs'>Don&apos;t have an account? register <span className='underline cursor-pointer' onClick={scrollToSignUp}>here</span></p>
         </CardFooter>
     </Card>
 }

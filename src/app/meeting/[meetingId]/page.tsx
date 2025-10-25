@@ -2,8 +2,8 @@
 
 import { useState, useRef, useEffect } from "react"
 import { useWebRTC } from "@/hooks/use-webrtc"
-import { VideoPlayer } from "@/components/video-player"
-import CallControls from "@/components/controls"
+import { VideoPlayer } from "@/components/video-player/video-player"
+import CallControls from "@/components/video-player/controls"
 import { useHTMLVideoRefs } from "@/hooks/use-videoRefs"
 import { useParams } from "next/navigation";
 import useStore from "@/zustand/stores/store"

@@ -10,7 +10,7 @@ import {
     DrawerTrigger,
 } from "@/components/ui/drawer"
 import CallSettingsItem from './callSettingsItem';
-import TooltipWrapper from './tooltipWrapper';
+import TooltipWrapper from '../tooltipWrapper';
 import { Separator } from '@radix-ui/react-separator';
 import { useAudioSettings } from '@/hooks/use-audio';
 import { useVideoSettings } from '@/hooks/use-video';

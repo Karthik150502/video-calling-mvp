@@ -1,6 +1,6 @@
 "use client"
 
-import { forwardRef, useCallback, useEffect, useState } from "react"
+import { forwardRef, useCallback, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Video, VideoOff, Mic, MicOff, Signal, SignalHigh, SignalLow, SignalMedium } from "lucide-react"
 import { cn } from "@/lib/utils"
