@@ -1,7 +1,7 @@
 "use client"
 import React from 'react'
-import { Button } from './ui/button'
-import { signOut } from '@/actions/sign-out'
+import { Button } from '../bate/ui/button'
+import { signOut } from '@/actions/auth/sign-out'
 import { useRouter } from 'next/navigation'
 
 export default function LogoutButton() {

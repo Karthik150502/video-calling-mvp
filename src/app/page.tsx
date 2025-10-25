@@ -1,4 +1,4 @@
-import LoginButton from "@/components/loginSignUpButton"
+import LoginButton from "@/components/auth/loginSignUpButton"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 export default function VideoCallPage() {
 

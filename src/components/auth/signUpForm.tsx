@@ -1,10 +1,10 @@
 "use client"
 import { SignUpSchema, SignUpType } from '@/lib/schema/zod';
-import { EyeOff, Eye, Loader2, LucideIcon } from 'lucide-react';
+import { EyeOff, Eye, LucideIcon } from 'lucide-react';
 import React, { useRef, useState, useTransition } from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/bate/ui/button';
 import { FormError } from '@/components/form/formError';
 import {
     Form,
@@ -16,7 +16,9 @@ import {
 } from '@/components/ui/form';
 import { FormSuccess } from '@/components/form/formSuccess';
 import { Input } from '@/components/ui/input';
-import { signUp } from '@/actions/sign-up';
+import { signUp } from '@/actions/auth/sign-up';
+import SocialSignOn from './socialSignOn';
+import { Separator } from '@/components/ui/separator';
 
 export default function SignUpForm() {
 
@@ -46,7 +48,7 @@ export default function SignUpForm() {
         startTransition(() => {
             signUp(values).then((data) => {
                 if (data.user) {
-                    setSuccess("Successfully signed up.");
+                    setSuccess(`A confirmation email has been sent at ${values.email}. Please verify your email before logging in.`);
                 }
                 if (data.error) {
                     setError(data.error);
@@ -188,15 +190,15 @@ export default function SignUpForm() {
                         />
                     </div>
                     <FormError message={error} />
-                    <Button disabled={isPending} type='submit' className='w-full'>
-                        {isPending && (
-                            <>
-                                <Loader2 className='animate-spin mr-2' size={18} />
-                                Creating...
-                            </>
-                        )}
-                        {!isPending && <>Register</>}
-                    </Button>
+                    <div className='w-full flex flex-col lg:flex-row items-end justify-center gap-4'>
+                        <div className='w-full'>
+                            <Button disabled={isPending} isLoading={isPending} type='submit' className='w-full'>
+                                Register
+                            </Button>
+                        </div>
+                        <Separator orientation="vertical" />
+                        <SocialSignOn />
+                    </div>
                 </form>
             </Form>
         )}

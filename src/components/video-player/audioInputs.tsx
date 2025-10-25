@@ -4,7 +4,7 @@ import * as React from "react"
 import { CheckIcon, ChevronDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/bate/ui/button"
 import {
     Command,
     CommandEmpty,
@@ -18,7 +18,7 @@ import {
     PopoverContent,
     PopoverTrigger,
 } from "@/components/ui/popover"
-import { Spinner } from "./ui/spinner"
+import { Spinner } from "../ui/spinner"
 
 
 export function SettingsCombobox({
