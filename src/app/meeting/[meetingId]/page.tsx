@@ -73,7 +73,8 @@ export default function MeetingPage() {
         sendToggleAudio,
         sendToggleVideo,
         currentMeetingId,
-        participantCount
+        participantCount,
+        accessToken,
     } = useWebRTC({
         onParticipantJoined: (_participant) => {
         },
@@ -91,6 +92,13 @@ export default function MeetingPage() {
             setConnectionError(error.message)
             setIsConnecting(false)
         },
+        onServerError: (message) => {
+            console.error(message);
+            if (message) {
+                setConnectionError(message)
+            }
+            endCall();
+        }
     })
     const minimize = participantCount > 0;
 
@@ -132,13 +140,12 @@ export default function MeetingPage() {
     const startCall = async (activeMeetingId?: string) => {
         setConnectionError(null);
         setIsConnecting(true);
-
         try {
             const stream = await getUserMedia()
             localStreamRef.current = stream;
             setIsCallActive(true)
 
-            await connectToSignalingServer(`${signalingServerUrl}?clientId=${"idFromSupabaseSession"}`)
+            await connectToSignalingServer(`${signalingServerUrl}`)
 
             addLocalStream(stream)
             const room = activeMeetingId || "default-room"
@@ -178,7 +185,7 @@ export default function MeetingPage() {
     }
 
     const endCall = () => {
-        router.push("/");
+        router.push("/home");
         setIsCallActive(false)
         setConnectionError(null)
         setIsConnecting(false)
@@ -186,10 +193,10 @@ export default function MeetingPage() {
 
 
     useEffect(() => {
-        if (currentMeetingId) {
+        if (currentMeetingId && accessToken) {
             startCall(currentMeetingId);
         }
-    }, [currentMeetingId])
+    }, [currentMeetingId, accessToken])
 
     useEffect(() => {
         window.addEventListener("unload", disconnectCall)

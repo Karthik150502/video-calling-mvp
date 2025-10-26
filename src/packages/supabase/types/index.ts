@@ -1,7 +1,7 @@
 export type UserProfile = {
-    firstName?: string,
-    lastName?: string,
+    name?: string,
     email?: string,
     emailVerified?: boolean,
-    id?: string
+    id?: string,
+    avatar_url?: string
 }

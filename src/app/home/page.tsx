@@ -10,8 +10,6 @@ import { Phone, Settings, AlertCircle, CheckCircle } from "lucide-react"
 import { useWebRTC } from "@/hooks/use-webrtc"
 import { useRouter } from "next/navigation"
 import ErrorBanner from "@/components/errorBanner"
-import { UserProfile } from "@/packages/supabase/types"
-import { getSession } from "@/actions/auth/getSession"
 import LogoutButton from "@/components/auth/logoutButton"
 
 export default function HomePage() {
@@ -24,41 +22,9 @@ export default function HomePage() {
   const router = useRouter();
 
 
-  const [user, setUser] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    getSession().then(({ session }) => {
-      if (session) {
-        const userData = {
-          id: session.user.id,
-          email: session.user.email,
-          firstName: session.user.user_metadata.firstName,
-          lastName: session.user.user_metadata.lastName,
-          emailVerified: session.user.user_metadata.email_verified,
-        }
-        console.log({
-          userData
-        })
-        setUser(userData)
-      }
-    })
-  }, [])
-
   const {
     checkSignalingServer
   } = useWebRTC({
-    onParticipantJoined: (participant) => {
-      console.log("Participant joined:", participant.id)
-    },
-    onParticipantLeft: (participantId) => {
-      console.log("Participant left:", participantId)
-    },
-    onParticipantStreamUpdate: (participantId, stream) => {
-      console.log("Participant stream updated:", participantId)
-    },
-    onConnectionStateChange: (participantId, state) => {
-      console.log(`Connection state changed for ${participantId}:`, state)
-    },
     onError: (error) => {
       console.error("WebRTC error:", error)
       setConnectionError(error.message)
