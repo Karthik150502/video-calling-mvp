@@ -6,7 +6,7 @@ import { VideoPlayer } from "@/components/video-player/video-player"
 import CallControls from "@/components/video-player/controls"
 import { useHTMLVideoRefs } from "@/hooks/use-videoRefs"
 import { useParams } from "next/navigation";
-import useStore from "@/zustand/stores/store"
+import useStore from "@/zustand/stores/participants"
 import { useRouter } from "next/navigation";
 import { useAddtionalCallSettings } from "@/hooks/use-settings"
 import { cn } from "@/lib/utils"
