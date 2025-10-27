@@ -2,15 +2,15 @@
 
 import { getSession } from "@/actions/auth/getSession";
 import { UserProfile } from "@/packages/supabase/types";
-import { useEffect, useState } from "react";
+import useUserStore from "@/zustand/stores/userSession";
+import { useEffect } from "react";
 
 export function useUser() {
-    const [accessToken, setAccessToken] = useState<string | null>(null);
-    const [user, setUser] = useState<UserProfile | null>(null);
+    const { updateUser, updateAccessToken } = useUserStore();
     useEffect(() => {
         getSession().then(({ session }) => {
             console.log({ session })
-            if (session) {
+            if (session) {  
                 const userData: UserProfile = {
                     id: session.user.id,
                     email: session.user.email,
@@ -18,14 +18,16 @@ export function useUser() {
                     emailVerified: session.user.user_metadata.email_verified,
                     avatar_url: session.user.user_metadata.avatar_url
                 }
-                setAccessToken(session.access_token);
-                setUser(userData)
+                updateUser(userData)
+                updateAccessToken(session.access_token)
             }
         })
+
+        return () => {
+            updateUser(null);
+            updateAccessToken(null)
+        }
     }, []);
 
-    return {
-        accessToken,
-        user
-    }
+    return null
 }

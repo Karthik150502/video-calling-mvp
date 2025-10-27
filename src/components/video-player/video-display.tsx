@@ -2,12 +2,13 @@
 
 import { forwardRef, useCallback, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Video, VideoOff, Mic, MicOff, Signal, SignalHigh, SignalLow, SignalMedium } from "lucide-react"
+import { Video, VideoOff, Mic, MicOff, Signal, SignalHigh, SignalLow, SignalMedium, CircleUserRound } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useWebRTC } from "@/hooks/use-webrtc"
+import Image from "next/image"
 
 interface VideoDisplayProps {
-  title: string
+  title?: string
   isLocal?: boolean
   isVideoEnabled?: boolean
   isAudioEnabled?: boolean
@@ -15,12 +16,13 @@ interface VideoDisplayProps {
   isConnected?: boolean
   className?: string,
   minimize?: boolean,
-  isFullscreen?: boolean
+  isFullscreen?: boolean,
+  displayPicture?: string
 }
 
 const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
   (
-    { title, isLocal = false, isVideoEnabled = true, isAudioEnabled = true, connectionQuality, isConnected, className, minimize, isFullscreen },
+    { title, displayPicture, isLocal = false, isVideoEnabled = true, isAudioEnabled = true, connectionQuality, isConnected, minimize, isFullscreen },
     ref,
   ) => {
     const [isVideoLoaded, setIsVideoLoaded] = useState(false);
@@ -77,8 +79,9 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
         {!isVideoEnabled && (
           <div className="absolute inset-0 bg-muted flex items-center justify-center">
             <div className="text-center">
-              <VideoOff className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Video disabled</p>
+              {
+                displayPicture ? <Image width={50} height={50} className="rounded-full" src={displayPicture} alt={`${title}'s display picure`} /> : <CircleUserRound className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
+              }
             </div>
           </div>)}
 
@@ -120,13 +123,11 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
         )}
 
         {/* Local Video Indicator */}
-        {isLocal && (
-          <div className="absolute top-2 left-2">
-            <Badge variant="secondary" className="text-xs">
-              You
-            </Badge>
-          </div>
-        )}
+        <div className="absolute top-2 left-2">
+          <Badge variant="secondary" className="text-xs">
+            {title}
+          </Badge>
+        </div>
 
         <div className="absolute top-2 right-2 flex items-center justify-center gap-2">
           <Badge variant="outline" className="px-2 py-1">

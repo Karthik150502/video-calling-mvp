@@ -1,10 +1,10 @@
 "use client"
 
 import { Participant } from "@/types/call"
-import useStore from "@/zustand/stores/store"
+import useStore from "@/zustand/stores/participants"
+import useUserStore from "@/zustand/stores/userSession"
 import { useRef, useCallback, useState } from "react"
 import { useAddtionalCallSettings } from "./use-settings"
-import { useUser } from "./use-user"
 
 interface WebRTCMessage {
   type: string
@@ -36,7 +36,7 @@ export function useWebRTC({
   const localStreamRef = useRef<MediaStream | null>(null)
   const wsRef = useRef<WebSocket | null>(null)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { accessToken } = useUser();
+  const { accessToken } = useUserStore();
   const { toggleFullscreen } = useAddtionalCallSettings()
 
   const iceServers = [
@@ -503,36 +503,36 @@ export function useWebRTC({
 
             case "existing-participants":
               console.log("Existing participants:", message.participants)
-              for (const participantId of message.participants) {
-                console.log("Setting up connection to existing participant:", participantId)
-                const pc = createPeerConnection(participantId)
+              for (const participant of message.participants) {
+                console.log("Setting up connection to existing participant:", participant.id)
+                const pc = createPeerConnection(participant.id)
 
                 if (localStreamRef.current) {
                   localStreamRef.current.getTracks().forEach((track) => {
                     pc.addTrack(track, localStreamRef.current!)
                   })
                 }
-
+                const newParticipant = { ...participant, connectionState: "new" }
                 setParticipants((prev) => {
                   const updated = new Map(prev);
-                  updated.set(participantId, { id: participantId, connectionState: "new" })
+                  updated.set(participant.id, newParticipant)
                   return updated
                 })
 
                 if (onParticipantJoined) {
-                  onParticipantJoined({ id: participantId, connectionState: "new" })
+                  onParticipantJoined(newParticipant)
                 }
 
-                setTimeout(() => createOffer(participantId), 2000)
+                setTimeout(() => createOffer(participant.id), 2000)
               }
               break
 
             case "new-participant":
-              console.log("New participant joined:", message.participantId)
-              const newParticipant: Participant = { id: message.participantId, connectionState: "new" as RTCPeerConnectionState, videoEnabled: message.videoEnabled, audioEnabled: message.audioEnabled }
+              console.log("New participant joined:", message.participant)
+              const newParticipant: Participant = { ...message.participant, connectionState: "new" as RTCPeerConnectionState, videoEnabled: message.videoEnabled, audioEnabled: message.audioEnabled }
               setParticipants((prev) => {
                 const updated = new Map(prev);
-                updated.set(message.participantId, newParticipant)
+                updated.set(newParticipant.id, newParticipant)
                 return updated
               })
 
