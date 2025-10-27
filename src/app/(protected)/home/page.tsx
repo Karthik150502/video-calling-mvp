@@ -10,8 +10,6 @@ import { Phone, Settings, AlertCircle, CheckCircle } from "lucide-react"
 import { useWebRTC } from "@/hooks/use-webrtc"
 import { useRouter } from "next/navigation"
 import ErrorBanner from "@/components/errorBanner"
-import { UserProfile } from "@/packages/supabase/types"
-import { getSession } from "@/actions/auth/getSession"
 import LogoutButton from "@/components/auth/logoutButton"
 
 export default function HomePage() {
@@ -20,45 +18,12 @@ export default function HomePage() {
   const [connectionError, setConnectionError] = useState<string | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const [serverStatus, setServerStatus] = useState<"unknown" | "checking" | "online" | "offline">("unknown")
-  const [useLocalMode, setUseLocalMode] = useState(false);
   const router = useRouter();
 
-
-  const [user, setUser] = useState<UserProfile | null>(null);
-
-  useEffect(() => {
-    getSession().then(({ session }) => {
-      if (session) {
-        const userData = {
-          id: session.user.id,
-          email: session.user.email,
-          firstName: session.user.user_metadata.firstName,
-          lastName: session.user.user_metadata.lastName,
-          emailVerified: session.user.user_metadata.email_verified,
-        }
-        console.log({
-          userData
-        })
-        setUser(userData)
-      }
-    })
-  }, [])
 
   const {
     checkSignalingServer
   } = useWebRTC({
-    onParticipantJoined: (participant) => {
-      console.log("Participant joined:", participant.id)
-    },
-    onParticipantLeft: (participantId) => {
-      console.log("Participant left:", participantId)
-    },
-    onParticipantStreamUpdate: (participantId, stream) => {
-      console.log("Participant stream updated:", participantId)
-    },
-    onConnectionStateChange: (participantId, state) => {
-      console.log(`Connection state changed for ${participantId}:`, state)
-    },
     onError: (error) => {
       console.error("WebRTC error:", error)
       setConnectionError(error.message)
@@ -124,19 +89,6 @@ export default function HomePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="local-mode"
-                checked={useLocalMode}
-                onChange={(e) => setUseLocalMode(e.target.checked)}
-                className="rounded"
-              />
-              <Label htmlFor="local-mode" className="text-sm">
-                Local Mode (Browser-only testing)
-              </Label>
-            </div>
-
             <>
               <div>
                 <Label htmlFor="room-id">Room ID (optional)</Label>
@@ -171,29 +123,17 @@ export default function HomePage() {
               </div>
             </>
 
-            {useLocalMode && (
-              <div className="p-3 bg-muted rounded-lg">
-                <p className="text-sm text-muted-foreground">
-                  Local mode allows you to test camera/microphone access without a signaling server. Perfect for
-                  development and testing the UI components.
-                </p>
-              </div>
-            )}
           </CardContent>
         </Card>
         <div className="flex justify-center gap-4 mb-8">
           <Button
             onClick={async () => {
-              if (useLocalMode) {
-
-              } else {
-                router.push(`/meeting/${roomId}`);
-              }
+              router.push(`/meeting/${roomId}`);
             }}
-            disabled={isConnecting || (!useLocalMode && serverStatus === "offline")}
+            disabled={isConnecting || (serverStatus === "offline")}
           >
             <Phone />
-            {isConnecting ? "Connecting..." : useLocalMode ? "Start Local Test" : "Join Call"}
+            {isConnecting ? "Connecting..." : "Join Call"}
           </Button>
           <LogoutButton />
         </div>

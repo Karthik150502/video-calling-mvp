@@ -3,11 +3,13 @@
 import { useEffect, RefObject } from "react"
 import { VideoDisplay } from "./video-display"
 import { cn } from "@/lib/utils"
-import { Participant } from "@/types/call"
+import { Participants } from "@/zustand/stores/participants"
+import useStore from "@/zustand/stores/userSession"
+
 
 interface VideoGridProps {
   localStream?: MediaStream | null
-  participants: Map<string, Participant>
+  participants: Participants
   isVideoEnabled: boolean
   isAudioEnabled: boolean
   className?: string,
@@ -19,6 +21,8 @@ interface VideoGridProps {
 }
 
 export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudioEnabled, className, localVideoRef, remoteVideoRefs, participantCount, minimize, isFullscreen }: VideoGridProps) {
+
+  const { user } = useStore();
 
   // Set up local video stream
   useEffect(() => {
@@ -48,7 +52,7 @@ export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudio
   }>
     <VideoDisplay
       ref={localVideoRef}
-      title="You (Local)"
+      title={user?.name}
       isLocal={true}
       isVideoEnabled={isVideoEnabled}
       isAudioEnabled={isAudioEnabled}
@@ -56,6 +60,7 @@ export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudio
       className={cn("min-h-0 aspect-video")}
       minimize={minimize}
       isFullscreen={isFullscreen}
+      displayPicture={user?.avatar_url}
     />
     {/* Remote Videos */}
     {Array.from(participants.entries()).map(([participantId, participant]) => {
@@ -70,7 +75,8 @@ export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudio
               remoteVideoRefs.current.delete(participantId)
             }
           }}
-          title={`Participant ${participantId.slice(-4)}`}
+          title={participant.name}
+          displayPicture={participant.avatar_url}
           isLocal={false}
           isVideoEnabled={participant.videoEnabled}
           isAudioEnabled={participant.audioEnabled}
