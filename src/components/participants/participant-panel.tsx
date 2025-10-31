@@ -19,7 +19,7 @@ import {
   Check,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Participant } from "@/types/call"
+import { Participant } from "@/types"
 
 interface ParticipantPanelProps {
   participants: Map<string, Participant>

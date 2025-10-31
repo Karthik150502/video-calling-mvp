@@ -1,4 +1,4 @@
-import { Participant } from '@/types/call'
+import { Participant } from '@/types'
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 

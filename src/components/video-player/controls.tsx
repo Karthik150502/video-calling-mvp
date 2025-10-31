@@ -5,8 +5,8 @@ import { Ellipsis, LucideUsersRound, Mic, MicOff, PhoneOff, Settings, Video, Vid
 import CallSettingsDrawer from './callSettingsDrawer';
 import TooltipWrapper from '../tooltipWrapper';
 import AdditionalCallSettings from './addtionalCallSettings';
-import { Participant } from '@/types/call';
-import ParticipantsTab from '../participantsTab';
+import { Participant } from '@/types';
+import ParticipantsTab from '../participants/participantsTab';
 import { cn } from '@/lib/utils';
 
 type ControlsProps = {

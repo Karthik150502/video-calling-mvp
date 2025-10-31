@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useWebRTC } from "@/hooks/use-webrtc"
 import { VideoPlayer } from "@/components/video-player/video-player"
 import CallControls from "@/components/video-player/controls"
-import { useHTMLVideoRefs } from "@/hooks/use-videoRefs"
+import { useHTMLVideoRefs } from "@/hooks/use-video-refs"
 import { useParams } from "next/navigation";
 import useStore from "@/zustand/stores/participants"
 import { useRouter } from "next/navigation";
@@ -145,7 +145,10 @@ export default function MeetingPage() {
             localStreamRef.current = stream;
             setIsCallActive(true)
 
-            await connectToSignalingServer(`${signalingServerUrl}`)
+            await connectToSignalingServer(`${signalingServerUrl}`, {
+                isAudioEnabled,
+                isVideoEnabled
+            })
 
             addLocalStream(stream)
             const room = activeMeetingId || "default-room"
