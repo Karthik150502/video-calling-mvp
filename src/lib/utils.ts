@@ -10,3 +10,9 @@ export function assertEnvVariable(name: string) {
   if (!envVar) throw new Error(`Environment variable: "${name}" not defined`);
   return envVar;
 }
+
+export function sendThroughWs(wsClient: WebSocket, data: { [key: string]: unknown }) {
+  wsClient.send(
+    JSON.stringify(data)
+  )
+}

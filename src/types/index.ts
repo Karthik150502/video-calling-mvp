@@ -9,3 +9,5 @@ export interface Participant {
     emailVerified?: boolean,
     avatar_url?: string
 }
+
+export type DeviceType = { value: string, label: string }

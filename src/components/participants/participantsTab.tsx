@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils'
-import { Participant } from '@/types/call'
+import { Participant } from '@/types'
 import React from 'react'
 import {
     Popover,
@@ -7,7 +7,7 @@ import {
     PopoverTrigger,
 } from "@/components/ui/popover"
 import { ScrollArea } from '@radix-ui/react-scroll-area'
-import TooltipWrapper from './tooltipWrapper'
+import TooltipWrapper from '../tooltipWrapper'
 
 type ParticipantPanelProps = {
     participants: Map<string, Participant>

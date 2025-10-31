@@ -1,4 +1,5 @@
 "use client";
+import { DeviceType } from "@/types";
 import { RefObject, useCallback, useEffect, useState } from "react";
 
 type UseAudioSettingsProps = {
@@ -8,10 +9,6 @@ type UseAudioSettingsProps = {
     localVideoRef: RefObject<HTMLVideoElement | null>,
     remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>
 }
-
-
-type DeviceType = { value: string, label: string }
-
 
 export function useAudioSettings({
     isAudioEnabled,
@@ -26,7 +23,6 @@ export function useAudioSettings({
     const [availableAudioInputs, setAvailableAudioInputs] = useState<DeviceType[]>([]);
     const [availableAudioOutputs, setAvailableAudioOutputs] = useState<DeviceType[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
-
 
     const switchAudioOutput = useCallback(async (deviceId?: string) => {
         const finalDeviceId = deviceId ?? "communications";

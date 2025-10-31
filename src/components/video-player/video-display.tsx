@@ -6,6 +6,7 @@ import { Video, VideoOff, Mic, MicOff, Signal, SignalHigh, SignalLow, SignalMedi
 import { cn } from "@/lib/utils"
 import { useWebRTC } from "@/hooks/use-webrtc"
 import Image from "next/image"
+import VideoDisplayOverlay from "../bate/ui/videoDisplayOverlay"
 
 interface VideoDisplayProps {
   title?: string
@@ -22,7 +23,17 @@ interface VideoDisplayProps {
 
 const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
   (
-    { title, displayPicture, isLocal = false, isVideoEnabled = true, isAudioEnabled = true, connectionQuality, isConnected, minimize, isFullscreen },
+    {
+      title,
+      displayPicture,
+      isLocal = false,
+      isVideoEnabled,
+      isAudioEnabled,
+      connectionQuality,
+      isConnected,
+      minimize,
+      isFullscreen
+    },
     ref,
   ) => {
     const [isVideoLoaded, setIsVideoLoaded] = useState(false);
@@ -65,7 +76,7 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
       else if (participantCount > 1) {
         return "aspect-video"
       }
-      else if (isFullscreen && isLocal) {
+      else if (isFullscreen) {
         return "w-full h-full rounded-none"
       }
       else {
@@ -73,18 +84,38 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
       }
     }, [minimize, participantCount, isFullscreen, isLocal])
 
+    const getOverlay = useCallback(() => {
+      if (!isVideoEnabled) {
+        return <VideoDisplayOverlay
+          overlayContent={displayPicture ? <Image width={50} height={50} className="rounded-full" src={displayPicture} alt={`${title}'s display picure`} /> : <CircleUserRound className="w-16 h-16 text-muted-foreground mx-auto mb-2" />}
+        />
+      }
+
+      if (!isLocal && !isConnected) {
+        return <VideoDisplayOverlay
+          overlayContent={<div className="animate-pulse">
+            <Video className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
+          </div>}
+          label="Waiting for connection..."
+        />
+      }
+      if (!isVideoLoaded && isConnected) {
+        return <VideoDisplayOverlay
+          overlayContent={<div className="animate-pulse">
+            <Video className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
+          </div>}
+          label="Loading video..."
+        />
+      }
+      return null;
+    }, [isVideoEnabled, isVideoLoaded, isConnected, displayPicture, title, isLocal])
+
     return (
       <div className={cn("relative bg-muted overflow-hidden rounded-2xl", getAdditionalStyles())}>
-        {/* Video Disabled Overlay */}
-        {!isVideoEnabled && (
-          <div className="absolute inset-0 bg-muted flex items-center justify-center">
-            <div className="text-center">
-              {
-                displayPicture ? <Image width={50} height={50} className="rounded-full" src={displayPicture} alt={`${title}'s display picure`} /> : <CircleUserRound className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
-              }
-            </div>
-          </div>)}
 
+        {getOverlay()}
+
+        {/* Only render video element when video should be enabled */}
         <video
           ref={ref}
           autoPlay
@@ -97,30 +128,6 @@ const VideoDisplay = forwardRef<HTMLVideoElement, VideoDisplayProps>(
           onLoadedData={() => setIsVideoLoaded(true)}
           onError={() => setIsVideoLoaded(false)}
         />
-
-        {/* Waiting for Connection Overlay */}
-        {!isLocal && !isConnected && (
-          <div className="absolute inset-0 bg-muted flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-pulse">
-                <Video className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
-              </div>
-              <p className="text-sm text-muted-foreground">Waiting for connection...</p>
-            </div>
-          </div>
-        )}
-
-        {/* Loading Overlay */}
-        {isVideoEnabled && !isVideoLoaded && isConnected && (
-          <div className="absolute inset-0 bg-muted flex items-center justify-center">
-            <div className="text-center">
-              <div className="animate-spin">
-                <Video className="w-16 h-16 text-muted-foreground mx-auto mb-2" />
-              </div>
-              <p className="text-sm text-muted-foreground">Loading video...</p>
-            </div>
-          </div>
-        )}
 
         {/* Local Video Indicator */}
         <div className="absolute top-2 left-2">
