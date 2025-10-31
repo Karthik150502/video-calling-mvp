@@ -2,7 +2,6 @@ import React from 'react'
 import { Card, CardContent } from './ui/card'
 import { AlertCircle } from 'lucide-react'
 
-
 type ErrorBannerProps = {
     heading: string,
     title: string,

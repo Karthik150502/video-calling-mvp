@@ -1,10 +1,10 @@
 "use client"
 
 import { useEffect, RefObject } from "react"
-import { VideoDisplay } from "./video-display"
 import { cn } from "@/lib/utils"
 import { Participants } from "@/zustand/stores/participants"
-import useStore from "@/zustand/stores/userSession"
+import ParticipantsVideoPlayer from "./participantsVideoPlayer"
+import { LocalVideoPlayer } from "./localVideoPlayer"
 
 
 interface VideoGridProps {
@@ -21,8 +21,6 @@ interface VideoGridProps {
 }
 
 export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudioEnabled, className, localVideoRef, remoteVideoRefs, participantCount, minimize, isFullscreen }: VideoGridProps) {
-
-  const { user } = useStore();
 
   // Set up local video stream
   useEffect(() => {
@@ -50,41 +48,19 @@ export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudio
 
   return <div className={cn("w-full h-full gap-4", className, getCols())
   }>
-    <VideoDisplay
-      ref={localVideoRef}
-      title={user?.name}
-      isLocal={true}
+    <LocalVideoPlayer
+      localVideoRef={localVideoRef}
       isVideoEnabled={isVideoEnabled}
       isAudioEnabled={isAudioEnabled}
-      isConnected={true}
-      className={cn("min-h-0 aspect-video")}
       minimize={minimize}
       isFullscreen={isFullscreen}
-      displayPicture={user?.avatar_url}
     />
-    {/* Remote Videos */}
-    {Array.from(participants.entries()).map(([participantId, participant]) => {
-      const isConnected = participant.connectionState === "connected"
-      return (
-        <VideoDisplay
-          key={participantId}
-          ref={(el) => {
-            if (el) {
-              remoteVideoRefs.current.set(participantId, el)
-            } else {
-              remoteVideoRefs.current.delete(participantId)
-            }
-          }}
-          title={participant.name}
-          displayPicture={participant.avatar_url}
-          isLocal={false}
-          isVideoEnabled={participant.videoEnabled}
-          isAudioEnabled={participant.audioEnabled}
-          connectionQuality={isConnected ? "good" : "poor"}
-          isConnected={isConnected}
-          className={cn("min-h-0 aspect-video")}
-        />
-      )
-    })}
+    <ParticipantsVideoPlayer
+      participants={participants}
+      participantCount={participantCount}
+      remoteVideoRefs={remoteVideoRefs}
+      isFullscreen={isFullscreen}
+      minimize={minimize}
+    />
   </div>
 }
