@@ -1,7 +1,7 @@
 "use client"
 import { UpdatePasswordSchema, UpdatePasswordType } from '@/lib/schema/zod';
 import { EyeOff, Eye, LucideIcon } from 'lucide-react';
-import React, { useRef, useState, useTransition } from 'react'
+import React, { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/bate/ui/button';
@@ -18,17 +18,17 @@ import { FormSuccess } from '@/components/form/formSuccess';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
 import { updatePassword } from '@/actions/auth/updatePassword';
+import { useActionHandler } from '@/hooks/use-handle-action';
 
 export default function UpdatePasswordForm() {
 
-    const [error, setError] = useState<string | undefined>('');
-    const [success, setSuccess] = useState<string | undefined>('');
     const [showPwd, setShowPwd] = useState<boolean>(false);
     const [showConfPwd, setShowConfPwd] = useState<boolean>(false);
 
-    const [isPending, startTransition] = useTransition();
     const pwdRef = useRef<LucideIcon>(EyeOff);
     const router = useRouter();
+    const { handle, isPending, error, success } = useActionHandler<string>(updatePassword);
+
 
     const form = useForm<UpdatePasswordType>({
         resolver: zodResolver(UpdatePasswordSchema),
@@ -39,19 +39,9 @@ export default function UpdatePasswordForm() {
     });
 
     const onSubmit = (values: UpdatePasswordType) => {
-        setError('');
-        setSuccess('');
-
-        startTransition(() => {
-            updatePassword(values.password).then((data) => {
-                if (!data.error) {
-                    setSuccess("Password updated successfully.");
-                    router.push("/auth/login")
-                } else {
-                    setError(data.error);
-                }
-            })
-        });
+        handle(values.password, () => {
+            router.push("/auth/login")
+        })
     };
 
     return <div>
