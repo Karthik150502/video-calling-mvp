@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useTransition } from 'react'
+import React from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/bate/ui/button';
@@ -17,12 +17,10 @@ import { Input } from '@/components/ui/input';
 import { EmailSchema, EmaiLType } from '@/lib/schema/zod';
 import { resetPassword } from '@/actions/auth/resetPassword';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '../ui/card';
+import { useActionHandler } from '@/hooks/use-handle-action';
 
 export default function PasswordResetForm() {
-  const [error, setError] = useState<string | undefined>('');
-  const [success, setSuccess] = useState<string | undefined>('');
-  const [isPending, startTransition] = useTransition();
-
+  const { handle, isPending, error, success } = useActionHandler<string>(resetPassword);
   const form = useForm<EmaiLType>({
     resolver: zodResolver(EmailSchema),
     defaultValues: {
@@ -31,18 +29,7 @@ export default function PasswordResetForm() {
   });
 
   const onSubmit = (values: EmaiLType) => {
-    setError('');
-    setSuccess('');
-
-    startTransition(() => {
-      resetPassword(values.email).then((data) => {
-        if (data.error) {
-          setError(data.error);
-          return
-        }
-        setSuccess(`Link sent to ${values.email}, please check.`);
-      })
-    });
+    handle(values.email)
   };
 
 

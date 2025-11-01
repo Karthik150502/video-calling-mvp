@@ -1,7 +1,7 @@
 "use client"
 import { SignUpSchema, SignUpType } from '@/lib/schema/zod';
 import { EyeOff, Eye, LucideIcon } from 'lucide-react';
-import React, { useRef, useState, useTransition } from 'react'
+import React, { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/bate/ui/button';
@@ -19,16 +19,15 @@ import { Input } from '@/components/ui/input';
 import { signUp } from '@/actions/auth/sign-up';
 import SocialSignOn from './socialSignOn';
 import { Separator } from '@/components/ui/separator';
+import { useActionHandler } from '@/hooks/use-handle-action';
 
 export default function SignUpForm() {
 
-    const [error, setError] = useState<string | undefined>('');
-    const [success, setSuccess] = useState<string | undefined>('');
     const [showConfPwd, setShowConfPwd] = useState<boolean>(false)
     const pwdConfRef = useRef<LucideIcon>(EyeOff);
     const [showPwd, setShowPwd] = useState<boolean>(false)
-    const [isPending, startTransition] = useTransition();
     const pwdRef = useRef<LucideIcon>(EyeOff);
+    const { handle, isPending, error, success } = useActionHandler<SignUpType>(signUp);
 
     const form = useForm<SignUpType>({
         resolver: zodResolver(SignUpSchema),
@@ -42,19 +41,7 @@ export default function SignUpForm() {
     });
 
     const onSubmit = (values: SignUpType) => {
-        setError('');
-        setSuccess('');
-
-        startTransition(() => {
-            signUp(values).then((data) => {
-                if (data.user) {
-                    setSuccess(`A confirmation email has been sent at ${values.email}. Please verify your email before logging in.`);
-                }
-                if (data.error) {
-                    setError(data.error);
-                }
-            })
-        });
+        handle(values);
     };
 
     return <div>

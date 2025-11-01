@@ -1,10 +1,6 @@
-import PasswordResetForm from '@/components/auth/passwordResetForm'
+import PasswordResetPage from '@/components/pages/PasswordResetPage'
 import React from 'react'
 
-export default function ForgotPasswordPage() {
-    return (
-        <div className='min-h-screen relative flex items-center justify-center'>
-            <PasswordResetForm />
-        </div>
-    )
+export default function ForgotPasswordPageWrapper() {
+    return <PasswordResetPage />
 }

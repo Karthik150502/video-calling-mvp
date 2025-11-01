@@ -1,15 +1,16 @@
+import { AUTH_CALLBACK } from "@/lib/constants";
 import { SignUpType } from "@/lib/schema/zod";
 import { createClient } from "@/packages/supabase/client";
-import { AuthError } from "@supabase/supabase-js";
+import { ActionResponse, UIError } from "@/types/error";
 
-export async function signUp(values: SignUpType) {
+export async function signUp(values: SignUpType): Promise<ActionResponse<unknown>> {
     try {
         const supabase = createClient()
         const result = await supabase.auth.signUp({
             email: values.email,
             password: values.password,
             options: {
-                emailRedirectTo: "http://localhost:3000/auth/v1/callback",
+                emailRedirectTo: AUTH_CALLBACK,
                 data: {
                     firstName: values.firstName,
                     lastName: values.lastName
@@ -17,13 +18,11 @@ export async function signUp(values: SignUpType) {
             }
         })
         if (result.error) {
-            return { user: null, error: result.error.message }
+            return { data: null, errorCode: UIError.CRED_SIGNUP_ERROR }
         }
-        return { user: result.data.user, error: null }
+        return { data: result.data.user, successMsg: `A confirmation email has been sent at ${values.email}. Please verify your email before logging in.` }
     } catch (error) {
-        if (error instanceof AuthError) {
-            return { user: null, error: error.message }
-        }
-        return { user: null, error: "Couldn't sign up due to some technical errors, please try again later." }
+        console.error(error)
+        return { data: null, errorCode: UIError.CRED_SIGNUP_ERROR }
     }
 }
