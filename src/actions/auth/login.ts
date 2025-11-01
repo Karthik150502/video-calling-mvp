@@ -1,26 +1,24 @@
 import { LoginType } from "@/lib/schema/zod";
 import { createClient } from "@/packages/supabase/client";
+import { ActionResponse, UIError } from "@/types/error";
 import { AuthError } from "@supabase/supabase-js";
 
-export async function login(values: LoginType) {
+export async function login(values: LoginType): Promise<ActionResponse<unknown>> {
     try {
         const supabase = createClient();
         const result = await supabase.auth.signInWithPassword({
             email: values.email,
             password: values.password,
         })
-        console.log({
-            result
-        })
         if (result.error) {
-            return { user: null, error: result.error.message, invalidCredentials: result.error.code === "invalid_credentials" }
+            return { data: null, errorCode: result.error.code === "invalid_credentials" ? UIError.LOGIN_INVALID_CREDENTIALS : UIError.CRED_LOGIN_ERROR }
         }
-        return { user: result.data.user, error: null, invalidCredentials: false }
+        return { data: result.data.user, successMsg: "Successfully logged in!" }
     } catch (error) {
-        console.log({ error })
+        console.error(error)
         if (error instanceof AuthError) {
-            return { user: null, error: error.message, invalidCredentials: error.code === "invalid_credentials" }
+            return { data: null, errorCode: error.code === "invalid_credentials" ? UIError.LOGIN_INVALID_CREDENTIALS : UIError.CRED_LOGIN_ERROR }
         }
-        return { user: null, error: "Couldn't sign in due to some technical errors, please try again later.", invalidCredentials: false }
+        return { data: null, errorCode: UIError.CRED_LOGIN_ERROR }
     }
 }

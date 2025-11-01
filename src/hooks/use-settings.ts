@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 export function useAddtionalCallSettings() {
 
     const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+    const [showControls, setShowControls] = useState<boolean>(isFullscreen);
 
     useEffect(() => {
         const handleFullscreenChange = () => {
@@ -27,7 +28,9 @@ export function useAddtionalCallSettings() {
 
     return {
         toggleFullscreen,
-        isFullscreen
+        isFullscreen,
+        showControls,
+        setShowControls
     }
 
 }

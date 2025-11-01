@@ -1,7 +1,7 @@
 "use client"
 import { LogingSchema, LoginType } from '@/lib/schema/zod';
 import { EyeOff, Eye, LucideIcon } from 'lucide-react';
-import React, { useRef, useState, useTransition } from 'react'
+import React, { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/bate/ui/button';
@@ -19,15 +19,15 @@ import { Input } from '@/components/ui/input';
 import { login } from '@/actions/auth/login';
 import { useRouter } from 'next/navigation';
 import SocialSignOn from './socialSignOn';
+import { useActionHandler } from '@/hooks/use-handle-action';
 
 export default function LoginForm() {
 
-    const [error, setError] = useState<string | undefined>('');
-    const [success, setSuccess] = useState<string | undefined>('');
+
     const [showPwd, setShowPwd] = useState<boolean>(false)
-    const [isPending, startTransition] = useTransition();
     const pwdRef = useRef<LucideIcon>(EyeOff);
     const router = useRouter();
+    const { handle, isPending, error, success } = useActionHandler<LoginType>(login);
 
     const form = useForm<LoginType>({
         resolver: zodResolver(LogingSchema),
@@ -38,19 +38,8 @@ export default function LoginForm() {
     });
 
     const onSubmit = (values: LoginType) => {
-        setError('');
-        setSuccess('');
-
-        startTransition(() => {
-            login(values).then((data) => {
-                if (data.user) {
-                    setSuccess("Successfully logged in.");
-                    router.push("/home")
-                }
-                if (data.invalidCredentials) {
-                    setError("Invalid password/ email");
-                }
-            })
+        handle(values, () => {
+            router.push("/home");
         });
     };
 

@@ -1,23 +1,22 @@
+import { AUTH_CALLBACK } from "@/lib/constants"
 import { createClient } from "@/packages/supabase/client"
-import { AuthError } from "@supabase/supabase-js"
+import { ActionResponse, UIError } from "@/types/error"
 
-export async function googleSignIn() {
+export async function googleSignIn(): Promise<ActionResponse<unknown>> {
     try {
         const supabase = createClient()
         const result = await supabase.auth.signInWithOAuth({
             provider: "google", options: {
-                redirectTo: "http://localhost:3000/auth/v1/callback",
+                redirectTo: AUTH_CALLBACK,
                 scopes: "openid email profile"
             }
         })
         if (result.error) {
-            return { user: null, error: result.error.message }
+            return { errorCode: UIError.GOOGLE_SIGNUP_ERROR }
         }
-        return { user: result.data, error: null }
+        return null
     } catch (error) {
-        if (error instanceof AuthError) {
-            return { user: null, error: error.message }
-        }
-        return { user: null, error: "Couldn't sign up due to some technical errors, please try again later." }
+        console.error(error)
+        return { errorCode: UIError.GOOGLE_SIGNUP_ERROR }
     }
 }

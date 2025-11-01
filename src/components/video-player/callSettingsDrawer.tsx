@@ -66,7 +66,7 @@ export default function CallSettingsDrawer({
     return (
         <Drawer>
             <TooltipWrapper
-                label='More Settings'
+                label='More Call Settings'
                 element={<DrawerTrigger asChild>
                     {triggerElement}
                 </DrawerTrigger>}
@@ -74,7 +74,7 @@ export default function CallSettingsDrawer({
             <DrawerContent className='w-full'>
                 <div className="mx-auto w-full md:w-5xl flex flex-col gap-4 items-center justify-center px-4">
                     <DrawerHeader className='w-full'>
-                        <DrawerTitle>More Settings</DrawerTitle>
+                        <DrawerTitle>More Call Settings</DrawerTitle>
                     </DrawerHeader>
                     <div className='w-full flex flex-col items-center justify-center gap-2'>
                         <CallSettingsItem
