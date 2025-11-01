@@ -1,11 +1,11 @@
 "use client"
-import { UpdatePasswordSchema, UpdatePasswordType } from '@/lib/schema/zod';
+import { LogingSchema, LoginType } from '@/lib/schema/zod';
 import { EyeOff, Eye, LucideIcon } from 'lucide-react';
 import React, { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/bate/ui/button';
-import { FormError } from '@/components/form/formError';
+import { FormError } from '@/components/forms/formError';
 import {
     Form,
     FormControl,
@@ -14,34 +14,32 @@ import {
     FormLabel,
     FormMessage
 } from '@/components/ui/form';
-import { FormSuccess } from '@/components/form/formSuccess';
+import { FormSuccess } from '@/components/forms/formSuccess';
 import { Input } from '@/components/ui/input';
+import { login } from '@/actions/auth/login';
 import { useRouter } from 'next/navigation';
-import { updatePassword } from '@/actions/auth/updatePassword';
+import SocialSignOn from '../auth/socialSignOn';
 import { useActionHandler } from '@/hooks/use-handle-action';
+import { Label } from '../ui/label';
 
-export default function UpdatePasswordForm() {
+export default function LoginForm() {
 
-    const [showPwd, setShowPwd] = useState<boolean>(false);
-    const [showConfPwd, setShowConfPwd] = useState<boolean>(false);
-
+    const [showPwd, setShowPwd] = useState<boolean>(false)
     const pwdRef = useRef<LucideIcon>(EyeOff);
     const router = useRouter();
-    const { handle, isPending, error, success } = useActionHandler<string>(updatePassword);
+    const { handle, isPending, error, success } = useActionHandler<LoginType>(login);
 
-
-    const form = useForm<UpdatePasswordType>({
-        resolver: zodResolver(UpdatePasswordSchema),
+    const form = useForm<LoginType>({
+        resolver: zodResolver(LogingSchema),
         defaultValues: {
-            password: "",
-            confirmPassword: ""
+            email: "",
+            password: ""
         }
     });
-
-    const onSubmit = (values: UpdatePasswordType) => {
-        handle(values.password, () => {
-            router.push("/auth/login")
-        })
+    const onSubmit = (values: LoginType) => {
+        handle(values, () => {
+            router.push("/home");
+        });
     };
 
     return <div>
@@ -50,6 +48,27 @@ export default function UpdatePasswordForm() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
                     <div className='space-y-4 grid grid-cols-1 items-start'>
+                        <FormField
+                            control={form.control}
+                            name='email'
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Email</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            {...field}
+                                            disabled={isPending}
+                                            placeholder='steverogers115@domain.com'
+                                            type='email'
+                                            autoComplete='email'
+                                        />
+                                    </FormControl>
+                                    <div className='w-full flex items-center justify-end'>
+                                        <FormMessage />
+                                    </div>
+                                </FormItem>
+                            )}
+                        />
                         <FormField
                             control={form.control}
                             name='password'
@@ -75,42 +94,11 @@ export default function UpdatePasswordForm() {
                                             </Button>
                                         </div>
                                     </FormControl>
-                                    <div className='w-full flex items-center justify-start'>
-                                        <p className='text-xs'><span className='underline cursor-pointer' onClick={() => { router.push("/auth/forgot-password") }}>forgot password?</span></p>
-                                    </div>
-                                    <div className='w-full flex items-center justify-end'>
-                                        <FormMessage />
-                                    </div>
-                                </FormItem>
-                            )}
-                        />
-
-                        <FormField
-                            control={form.control}
-                            name='confirmPassword'
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Retype Password</FormLabel>
-                                    <FormControl>
-                                        <div className='w-full bg-red h-full relative'>
-                                            <Input
-                                                {...field}
-                                                disabled={isPending}
-                                                placeholder='••••••••'
-                                                type={showConfPwd ? "text" : "password"}
-                                            />
-                                            <Button type="button" variant={"outline"} size={"icon"}
-                                                onClick={() => {
-                                                    setShowConfPwd(!showConfPwd)
-                                                    pwdRef.current = showConfPwd ? EyeOff : Eye
-                                                }}
-                                                className='absolute right-0 top-0 rounded-tl-none rounded-bl-none group'
-                                            >
-                                                <pwdRef.current className='stroke-muted-foreground transition-colors duration-300 group-hover:stroke-primary_2' />
-                                            </Button>
-                                        </div>
-                                    </FormControl>
-                                    <div className='w-full flex items-center justify-start'>
+                                    <div className='w-full flex items-center justify-between'>
+                                        <Label className='flex items-center justify-center text-xs'>
+                                            <p className='text-nowrap'>Remember me?</p>
+                                            <Input type="checkbox" className='h-fit w-fit' />
+                                        </Label>
                                         <p className='text-xs'><span className='underline cursor-pointer' onClick={() => { router.push("/auth/forgot-password") }}>forgot password?</span></p>
                                     </div>
                                     <div className='w-full flex items-center justify-end'>
@@ -123,8 +111,10 @@ export default function UpdatePasswordForm() {
                     <FormError message={error} />
                     <div className='w-full flex flex-col items-center justify-center gap-4'>
                         <Button isLoading={isPending} disabled={isPending} type='submit' className='w-full'>
-                            Update Password
+                            Login
                         </Button>
+                        <p className='text-xs'>or</p>
+                        <SocialSignOn />
                     </div>
                 </form>
             </Form>

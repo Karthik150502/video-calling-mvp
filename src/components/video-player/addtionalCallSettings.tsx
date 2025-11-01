@@ -9,8 +9,6 @@ import {
     DropdownMenuPortal,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from '../ui/button';
-import { Ellipsis } from 'lucide-react';
 import TooltipWrapper from '../tooltipWrapper';
 type CallSettingsProps = {
     label: string,

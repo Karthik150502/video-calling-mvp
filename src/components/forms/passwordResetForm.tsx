@@ -3,7 +3,7 @@ import React from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/bate/ui/button';
-import { FormError } from '@/components/form/formError';
+import { FormError } from '@/components/forms/formError';
 import {
   Form,
   FormControl,
@@ -12,7 +12,7 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import { FormSuccess } from '@/components/form/formSuccess';
+import { FormSuccess } from '@/components/forms/formSuccess';
 import { Input } from '@/components/ui/input';
 import { EmailSchema, EmaiLType } from '@/lib/schema/zod';
 import { resetPassword } from '@/actions/auth/resetPassword';

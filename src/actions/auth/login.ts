@@ -1,9 +1,9 @@
 import { LoginType } from "@/lib/schema/zod";
 import { createClient } from "@/packages/supabase/client";
 import { ActionResponse, UIError } from "@/types/error";
-import { AuthError } from "@supabase/supabase-js";
+import { AuthError, User } from "@supabase/supabase-js";
 
-export async function login(values: LoginType): Promise<ActionResponse<unknown>> {
+export async function login(values: LoginType): Promise<ActionResponse<User>> {
     try {
         const supabase = createClient();
         const result = await supabase.auth.signInWithPassword({

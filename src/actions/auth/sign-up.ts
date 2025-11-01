@@ -2,18 +2,20 @@ import { AUTH_CALLBACK } from "@/lib/constants";
 import { SignUpType } from "@/lib/schema/zod";
 import { createClient } from "@/packages/supabase/client";
 import { ActionResponse, UIError } from "@/types/error";
+import { User } from "@supabase/supabase-js";
 
-export async function signUp(values: SignUpType): Promise<ActionResponse<unknown>> {
+export async function signUp(values: SignUpType): Promise<ActionResponse<User | null>> {
     try {
         const supabase = createClient()
         const result = await supabase.auth.signUp({
             email: values.email,
             password: values.password,
             options: {
-                emailRedirectTo: AUTH_CALLBACK,
+                emailRedirectTo: `${AUTH_CALLBACK}?next=/home`,
                 data: {
                     firstName: values.firstName,
-                    lastName: values.lastName
+                    lastName: values.lastName,
+                    full_name: `${values.firstName} ${values.lastName}`
                 }
             }
         })
