@@ -5,7 +5,7 @@ import React, { useRef, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from '@/components/bate/ui/button';
-import { FormError } from '@/components/form/formError';
+import { FormError } from '@/components/forms/formError';
 import {
     Form,
     FormControl,
@@ -14,10 +14,10 @@ import {
     FormLabel,
     FormMessage
 } from '@/components/ui/form';
-import { FormSuccess } from '@/components/form/formSuccess';
+import { FormSuccess } from '@/components/forms/formSuccess';
 import { Input } from '@/components/ui/input';
 import { signUp } from '@/actions/auth/sign-up';
-import SocialSignOn from './socialSignOn';
+import SocialSignOn from '../auth/socialSignOn';
 import { Separator } from '@/components/ui/separator';
 import { useActionHandler } from '@/hooks/use-handle-action';
 
@@ -49,7 +49,7 @@ export default function SignUpForm() {
         {!success && (
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
-                    <div className='space-y-4 grid grid-cols-1 lg:grid-cols-2 lg:gap-4 items-start'>
+                    <div className='space-y-2 grid grid-cols-1 lg:grid-cols-2 lg:gap-4 items-start'>
                         <FormField
                             control={form.control}
                             name='firstName'
@@ -175,6 +175,12 @@ export default function SignUpForm() {
                                 </FormItem>
                             )}
                         />
+                        <div className='p-4'>
+                            <ul className='text-xs list-disc'>
+                                <li><p>Your password should contain both uppercase and lowercase letters.</p></li>
+                                <li><p>It must also include at least one number and one special character.</p></li>
+                            </ul>
+                        </div>
                     </div>
                     <FormError message={error} />
                     <div className='w-full flex flex-col lg:flex-row items-end justify-center gap-4'>

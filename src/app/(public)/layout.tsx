@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import "./globals.css";
+import "../globals.css";
 import { manrope400 } from "@/fonts/manrope400";
 
 export const metadata: Metadata = {

@@ -7,7 +7,7 @@ type UseAudioSettingsProps = {
     localStreamRef: RefObject<MediaStream | null>,
     replaceAudioVideoTrackInPeerConnections: (newTrack: MediaStreamTrack, replaceAudio?: boolean) => Promise<void>,
     localVideoRef: RefObject<HTMLVideoElement | null>,
-    remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>
+    remoteVideoRefs: RefObject<Map<string, HTMLVideoElement>>,
 }
 
 export function useAudioSettings({

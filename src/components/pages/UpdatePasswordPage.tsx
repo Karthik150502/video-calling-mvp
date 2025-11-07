@@ -1,6 +1,8 @@
 import React from 'react'
-import PasswordResetPage from './PasswordResetPage'
+import UpdatePasswordComponent from '../auth/updatePwdComponent'
 
 export default function UpdatePasswordPage() {
-    return <PasswordResetPage />
+    return <div className='min-h-screen relative flex items-center justify-center'>
+        <UpdatePasswordComponent />
+    </div>
 }

@@ -20,7 +20,18 @@ interface VideoGridProps {
   isFullscreen?: boolean
 }
 
-export function VideoPlayer({ localStream, participants, isVideoEnabled, isAudioEnabled, className, localVideoRef, remoteVideoRefs, participantCount, minimize, isFullscreen }: VideoGridProps) {
+export function VideoPlayer({
+  localStream,
+  participants,
+  isVideoEnabled,
+  isAudioEnabled,
+  className,
+  localVideoRef,
+  remoteVideoRefs,
+  participantCount,
+  minimize,
+  isFullscreen
+}: VideoGridProps) {
 
   // Set up local video stream
   useEffect(() => {

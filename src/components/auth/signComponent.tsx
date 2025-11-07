@@ -1,7 +1,7 @@
 "use client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card'
 import React from 'react'
-import SignUpForm from './signUpForm';
+import SignUpForm from '../forms/signUpForm';
 
 type SignUpComponentProps = {
     scrollToLogin: () => void
