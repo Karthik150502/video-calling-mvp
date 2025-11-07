@@ -1,7 +1,7 @@
 "use client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card'
 import React from 'react'
-import UpdatePasswordForm from './updatePwdForm';
+import UpdatePasswordForm from '../forms/updatePwdForm';
 
 export default function UpdatePasswordComponent() {
     return <Card className='shadow-2xs'>

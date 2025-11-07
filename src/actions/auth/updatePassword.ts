@@ -2,7 +2,7 @@ import { createClient } from "@/packages/supabase/client";
 import { ActionResponse, UIError } from "@/types/error";
 import { AuthError } from "@supabase/supabase-js";
 
-export async function updatePassword(password: string): Promise<ActionResponse<unknown>> {
+export async function updatePassword(password: string): Promise<ActionResponse<null>> {
     try {
         const supabase = createClient();
         const result = await supabase.auth.updateUser({

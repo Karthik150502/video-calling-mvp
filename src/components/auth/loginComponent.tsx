@@ -1,7 +1,7 @@
 "use client";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card'
 import React from 'react'
-import LoginForm from './loginForm';
+import LoginForm from '../forms/loginForm';
 
 type LoginComponentProps = {
     scrollToSignUp: () => void
@@ -18,7 +18,6 @@ export default function LoginComponent({ scrollToSignUp }: LoginComponentProps) 
             <LoginForm />
         </CardContent>
         <CardDescription>
-
         </CardDescription>
         <CardFooter>
             <p className='text-xs'>Don&apos;t have an account? register <span className='underline cursor-pointer' onClick={scrollToSignUp}>here</span></p>
